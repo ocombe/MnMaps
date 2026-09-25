@@ -14,3 +14,9 @@
 #alignment-tools #alignment-count{font-family:system-ui,sans-serif;font-size:11px}
 #alignment-export{width:100%;font-size:12px}
 #alignment-restore{width:100%;font-size:11px;margin-bottom:7px;background:transparent}
+.search-box:focus-within{outline:3px solid #147b92;outline-offset:3px}
+.search-box input{flex:1;width:auto}
+.search-box input:focus-visible{outline:none}
+.search-box input::-webkit-search-cancel-button{-webkit-appearance:none;appearance:none}
+.search-box #clear-search{flex:none;display:grid;place-items:center;width:28px;height:28px;padding:0;border:0;background:transparent;color:#78684e;font:22px/1 Georgia,'Times New Roman',serif}
+.search-box #clear-search:hover{background:#e5d1a6;color:var(--ink)}
