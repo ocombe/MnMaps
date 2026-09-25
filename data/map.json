@@ -1,0 +1,9 @@
+{
+  "id": "night-harbor",
+  "title": "Night Harbor",
+  "width": 3072,
+  "height": 2688,
+  "maxNativeZoom": 4,
+  "tileSize": 256,
+  "tileRevision": "v13"
+}

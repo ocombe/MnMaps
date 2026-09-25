@@ -1,0 +1,426 @@
+[
+  {
+    "id": "wiki-1",
+    "name": "Bank — west city",
+    "category": "Bank",
+    "x": 1058.38,
+    "y": 1414.15,
+    "note": ""
+  },
+  {
+    "id": "wiki-2",
+    "name": "Bank — Sageside",
+    "category": "Bank",
+    "x": 1914.48,
+    "y": 1275.17,
+    "note": ""
+  },
+  {
+    "id": "wiki-3",
+    "name": "Bank — south city",
+    "category": "Bank",
+    "x": 1674.89,
+    "y": 1952.35,
+    "note": ""
+  },
+  {
+    "id": "wiki-4",
+    "name": "Inn — Blackfeather Bazaar",
+    "category": "Inn",
+    "x": 1567.94,
+    "y": 1034.08,
+    "note": ""
+  },
+  {
+    "id": "wiki-5",
+    "name": "Stable — Wayfarer’s Hospice",
+    "category": "Stable",
+    "x": 893.65,
+    "y": 1307.59,
+    "note": ""
+  },
+  {
+    "id": "wiki-6",
+    "name": "Shaded Bloom Inn",
+    "category": "Inn",
+    "x": 1028.47,
+    "y": 1466.42,
+    "note": ""
+  },
+  {
+    "id": "wiki-7",
+    "name": "Inn — west Sageside",
+    "category": "Inn",
+    "x": 1675.02,
+    "y": 1308.36,
+    "note": ""
+  },
+  {
+    "id": "wiki-8",
+    "name": "Inn — east Sageside",
+    "category": "Inn",
+    "x": 2092.52,
+    "y": 1275.33,
+    "note": ""
+  },
+  {
+    "id": "wiki-9",
+    "name": "Inn — south waterfront",
+    "category": "Inn",
+    "x": 1922.92,
+    "y": 1832.38,
+    "note": ""
+  },
+  {
+    "id": "wiki-10",
+    "name": "Stable — west city",
+    "category": "Stable",
+    "x": 971.38,
+    "y": 1595.68,
+    "note": ""
+  },
+  {
+    "id": "wiki-11",
+    "name": "Stable — North Gate",
+    "category": "Stable",
+    "x": 1906.93,
+    "y": 1167.92,
+    "note": ""
+  },
+  {
+    "id": "wiki-12",
+    "name": "Stable — Little Half Town",
+    "category": "Stable",
+    "x": 1483.09,
+    "y": 1664.54,
+    "note": ""
+  },
+  {
+    "id": "wiki-13",
+    "name": "Shady merchant — west outskirts",
+    "category": "Shady merchant",
+    "x": 707.73,
+    "y": 1711.01,
+    "note": ""
+  },
+  {
+    "id": "wiki-14",
+    "name": "Shady merchant — Sojourner’s Camp",
+    "category": "Shady merchant",
+    "x": 990.11,
+    "y": 1371.94,
+    "note": ""
+  },
+  {
+    "id": "wiki-15",
+    "name": "Shady merchant — North Gate",
+    "category": "Shady merchant",
+    "x": 1926.47,
+    "y": 1177.63,
+    "note": ""
+  },
+  {
+    "id": "wiki-16",
+    "name": "Shady merchant — east North Gate",
+    "category": "Shady merchant",
+    "x": 2114.1,
+    "y": 1139.38,
+    "note": ""
+  },
+  {
+    "id": "wiki-17",
+    "name": "Inn — north of Bathhouse",
+    "category": "Inn",
+    "x": 1097.59,
+    "y": 1528.07,
+    "note": ""
+  },
+  {
+    "id": "wiki-18",
+    "name": "Stone Cutting — north of Sojourner’s Camp",
+    "category": "Tradeskill",
+    "x": 1034.88,
+    "y": 1105.26,
+    "note": ""
+  },
+  {
+    "id": "wiki-19",
+    "name": "Tinkering — north of Sojourner’s Camp",
+    "category": "Tradeskill",
+    "x": 1041.15,
+    "y": 1135.71,
+    "note": ""
+  },
+  {
+    "id": "wiki-20",
+    "name": "Survival — Sojourner’s Camp",
+    "category": "Tradeskill",
+    "x": 860.64,
+    "y": 1192.92,
+    "note": ""
+  },
+  {
+    "id": "wiki-21",
+    "name": "Wilderness — Sojourner’s Camp",
+    "category": "Tradeskill",
+    "x": 950.32,
+    "y": 1188.17,
+    "note": ""
+  },
+  {
+    "id": "wiki-22",
+    "name": "Riding — Wayfarer’s Hospice",
+    "category": "Tradeskill",
+    "x": 911.41,
+    "y": 1306.29,
+    "note": ""
+  },
+  {
+    "id": "wiki-23",
+    "name": "Lumberjacking — Sojourner’s Camp",
+    "category": "Tradeskill",
+    "x": 930.02,
+    "y": 1285.62,
+    "note": ""
+  },
+  {
+    "id": "wiki-24",
+    "name": "Mining — Sojourner’s Camp",
+    "category": "Tradeskill",
+    "x": 987.88,
+    "y": 1310.12,
+    "note": ""
+  },
+  {
+    "id": "wiki-25",
+    "name": "Herbalism — Wayfarer’s Hospice",
+    "category": "Tradeskill",
+    "x": 828.56,
+    "y": 1309.13,
+    "note": ""
+  },
+  {
+    "id": "wiki-26",
+    "name": "First Aid — Wayfarer’s Hospice",
+    "category": "Tradeskill",
+    "x": 916.0,
+    "y": 1336.95,
+    "note": ""
+  },
+  {
+    "id": "wiki-27",
+    "name": "Leatherworking — Tannery",
+    "category": "Tradeskill",
+    "x": 1150.03,
+    "y": 1307.04,
+    "note": ""
+  },
+  {
+    "id": "wiki-28",
+    "name": "Skinning / Tanning — Tannery",
+    "category": "Tradeskill",
+    "x": 1155.03,
+    "y": 1365.86,
+    "note": ""
+  },
+  {
+    "id": "wiki-29",
+    "name": "Wagoneering — Shaded Bloom Inn",
+    "category": "Tradeskill",
+    "x": 950.04,
+    "y": 1423.32,
+    "note": ""
+  },
+  {
+    "id": "wiki-30",
+    "name": "Animal Taming — Shaded Bloom Inn",
+    "category": "Tradeskill",
+    "x": 955.4,
+    "y": 1450.08,
+    "note": ""
+  },
+  {
+    "id": "wiki-31",
+    "name": "Cooking — Shaded Bloom Inn",
+    "category": "Tradeskill",
+    "x": 1010.79,
+    "y": 1441.17,
+    "note": ""
+  },
+  {
+    "id": "wiki-32",
+    "name": "Jewelcrafting — Night Market",
+    "category": "Tradeskill",
+    "x": 1215.5,
+    "y": 1542.66,
+    "note": ""
+  },
+  {
+    "id": "wiki-33",
+    "name": "Brewing / Fermenting — Night Market",
+    "category": "Tradeskill",
+    "x": 1242.26,
+    "y": 1533.35,
+    "note": ""
+  },
+  {
+    "id": "wiki-34",
+    "name": "Spycraft — bard guild",
+    "category": "Tradeskill",
+    "x": 1097.06,
+    "y": 1575.33,
+    "note": ""
+  },
+  {
+    "id": "wiki-35",
+    "name": "Tailoring — Night Market",
+    "category": "Tradeskill",
+    "x": 1230.68,
+    "y": 1612.31,
+    "note": ""
+  },
+  {
+    "id": "wiki-36",
+    "name": "Blacksmithing / Smelting — Night Market",
+    "category": "Tradeskill",
+    "x": 1254.77,
+    "y": 1623.09,
+    "note": ""
+  },
+  {
+    "id": "wiki-37",
+    "name": "Pottery — Shrine to Porbor",
+    "category": "Tradeskill",
+    "x": 1308.01,
+    "y": 1661.33,
+    "note": ""
+  },
+  {
+    "id": "wiki-38",
+    "name": "Riding — west city",
+    "category": "Tradeskill",
+    "x": 973.68,
+    "y": 1634.7,
+    "note": ""
+  },
+  {
+    "id": "wiki-39",
+    "name": "Fletching — Steel Talon Garrison",
+    "category": "Tradeskill",
+    "x": 854.24,
+    "y": 1736.54,
+    "note": ""
+  },
+  {
+    "id": "wiki-40",
+    "name": "Archaeology — Blackfeather Bazaar",
+    "category": "Tradeskill",
+    "x": 1601.46,
+    "y": 1123.46,
+    "note": ""
+  },
+  {
+    "id": "wiki-41",
+    "name": "Alchemy — Blackfeather Bazaar",
+    "category": "Tradeskill",
+    "x": 1676.98,
+    "y": 1092.03,
+    "note": ""
+  },
+  {
+    "id": "wiki-42",
+    "name": "Survival — North Gate",
+    "category": "Tradeskill",
+    "x": 1875.18,
+    "y": 1155.62,
+    "note": ""
+  },
+  {
+    "id": "wiki-43",
+    "name": "Tailoring — Sageside",
+    "category": "Tradeskill",
+    "x": 2090.24,
+    "y": 1225.53,
+    "note": ""
+  },
+  {
+    "id": "wiki-44",
+    "name": "Spinning — Sageside",
+    "category": "Tradeskill",
+    "x": 2117.23,
+    "y": 1222.08,
+    "note": ""
+  },
+  {
+    "id": "wiki-45",
+    "name": "Spellcrafting — wizard guild",
+    "category": "Tradeskill",
+    "x": 2228.98,
+    "y": 1158.69,
+    "note": ""
+  },
+  {
+    "id": "wiki-46",
+    "name": "Astrology — wizard guild",
+    "category": "Tradeskill",
+    "x": 2277.43,
+    "y": 1188.29,
+    "note": ""
+  },
+  {
+    "id": "wiki-47",
+    "name": "Cooking — Sageside",
+    "category": "Tradeskill",
+    "x": 2118.82,
+    "y": 1258.84,
+    "note": ""
+  },
+  {
+    "id": "wiki-48",
+    "name": "Farming — north outskirts",
+    "category": "Tradeskill",
+    "x": 2136.29,
+    "y": 936.28,
+    "note": ""
+  },
+  {
+    "id": "wiki-49",
+    "name": "Fletching — Little Half Town",
+    "category": "Tradeskill",
+    "x": 1520.23,
+    "y": 1763.19,
+    "note": ""
+  },
+  {
+    "id": "wiki-50",
+    "name": "(Dis)Enchanting — southeast of Little Half Town",
+    "category": "Tradeskill",
+    "x": 1796.38,
+    "y": 1806.16,
+    "note": ""
+  },
+  {
+    "id": "wiki-51",
+    "name": "Navigation — waterfront",
+    "category": "Tradeskill",
+    "x": 2066.05,
+    "y": 1908.94,
+    "note": ""
+  },
+  {
+    "id": "wiki-52",
+    "name": "Carpentry / Woodworking — waterfront",
+    "category": "Tradeskill",
+    "x": 2051.55,
+    "y": 1923.37,
+    "note": ""
+  },
+  {
+    "id": "wiki-53",
+    "name": "Cartography — eastern island",
+    "category": "Tradeskill",
+    "x": 2760,
+    "y": 1986,
+    "note": ""
+  }
+]
