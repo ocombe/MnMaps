@@ -1,0 +1,52 @@
+{
+  "version": 1,
+  "defaultMap": "night-harbor",
+  "maps": [
+    {
+      "id": "night-harbor",
+      "title": "Night Harbor",
+      "subtitle": "A traveller’s chart",
+      "cartoucheKicker": "The Free City of",
+      "breadcrumb": "Monsters & Memories / Night Harbor",
+      "description": "An illustrated atlas of Night Harbor. Explore landmarks, find class trainers, and keep your own field notes.",
+      "width": 3072,
+      "height": 2688,
+      "minZoom": 0,
+      "maxNativeZoom": 5,
+      "tileSize": 256,
+      "tileRevision": "v2",
+      "coordinateZoom": 4,
+      "maxZoom": 6,
+      "tilePath": "assets/tiles/night-harbor-v2/{z}/{x}/{y}.webp",
+      "markersFile": "data/markers.json",
+      "labelsFile": "data/labels.json",
+      "hiddenAreasFile": "data/hidden-areas.json",
+      "defaultView": {
+        "mode": "fit",
+        "padding": 18,
+        "placeZoom": 3.5
+      },
+      "attribution": {
+        "map": "Illustrated fan atlas · Not an official game map",
+        "text": "Place names & guilds adapted from Maggot’s wiki map · approximate",
+        "sourceTitle": "Maggot’s Night Harbor V5 wiki map",
+        "sourceUrl": "https://static.wikitide.net/monstersandmemorieswiki/5/5a/Night_harbor_V5.jpg",
+        "license": "CC BY-SA 4.0",
+        "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+        "changes": "Place names and guild locations adapted from Maggot's Night Harbor map (CC BY-SA 4.0); positions adjusted to this map, 'Docs' corrected to 'Docks'."
+      },
+      "hiddenPrimaryStack": {
+        "lower": "stone-hall",
+        "upper": "upper-stone",
+        "lowerLabel": "lower stone halls",
+        "upperLabel": "upper stone gallery"
+      },
+      "legacyStorage": {
+        "notesKey": "mnmaps-night-harbor-notes-v1",
+        "notesRevision": "previous",
+        "hiddenKey": "mnmaps-night-harbor-hidden-areas"
+      },
+      "migratePreviousStorage": true
+    }
+  ]
+}

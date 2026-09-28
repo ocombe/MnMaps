@@ -1,76 +1,252 @@
-/* All positions are pixels on the illustration. */
+/* Static atlas. Registry and feature coordinates are local, native map pixels. */
 'use strict';
 const $=id=>document.getElementById(id);
-const categories={'Bank':['▣','#916c30'],'Inn':['☾','#9a543a'],'Stable':['♞','#665e3e'],'Shady merchant':['♧','#785268'],'Tradeskill':['⚒','#385f60'],'Personal':['✧','#a04438']};
-const KEY='mnmaps-night-harbor-notes-v1';
-const ALIGN_KEY='mnmaps-night-harbor-alignment-v1';
-const alignmentMode=new URLSearchParams(location.search).has('align');
-let selectedAlignmentId=null, alignmentPositions={},publishedPositions=new Map();
-// Keep this query aligned with the CSS drawer breakpoint. No device sniffing.
-const mobileLayout=matchMedia('(max-width: 760px)');
-let desktopPanelOpen=true;
-let map,config,originals=[],personal=[],pins=new Map(),enabled=new Set(Object.keys(categories)),showPins=true,placing=false,draft=null,statusTimer;
 const text=(tag,value,cls)=>{const n=document.createElement(tag);n.textContent=value;if(cls)n.className=cls;return n;};
+const categories={'Bank':['▣','#916c30'],'Inn':['☾','#9a543a'],'Stable':['♞','#665e3e'],'Shady merchant':['♧','#785268'],'Tradeskill':['⚒','#385f60'],'Class trainer':['◈','#4e4668'],'Personal':['✧','#a04438']};
+const mobileLayout=matchMedia('(max-width: 760px)');
+let embedded=false;try{embedded=window.self!==window.top;}catch{embedded=true;}
+const isEmbed=embedded||new URLSearchParams(location.search).get('embed')==='1';
+document.body.classList.toggle('embed',isEmbed);
+const compact=()=>isEmbed||mobileLayout.matches;
+let registry,map,config,originals=[],personal=[],pins=new Map(),placeIndex=[],hiddenController;
+let enabled=new Set(Object.keys(categories)),showPins=true,placing=false,draft=null,statusTimer;
+let alignmentMode=false,selectedAlignmentId=null,selectedAlignmentKind='marker',alignmentPositions={},alignmentLabelPositions={},publishedPositions=new Map(),publishedLabelPositions=new Map();
+let desktopPanelOpen=true,disposeLabels=()=>{},loadSerial=0,loading=false,applyingView=false,urlTimer,activePlace=null,sharedPin=null;
+const storageKey=kind=>`mnmaps-${config.id}-${kind}-${config.tileRevision}`;
+function migratePreviousStorage(){
+ if(!config.migratePreviousStorage)return;
+ try{
+  // Reuse a single previous edition's local drafts; never overwrite current data.
+  const kinds=['notes','alignment','label-alignment','hidden-areas','place-names'];
+  const savedKeys=Object.keys(localStorage);
+  for(const kind of kinds){
+   const key=storageKey(kind),prefix=`mnmaps-${config.id}-${kind}-`;
+   if(localStorage.getItem(key)!==null)continue;
+   const candidates=savedKeys.filter(k=>k.startsWith(prefix)&&k!==key&&k!==prefix+'v1'&&!k.startsWith(prefix+'previous-'));
+   if(candidates.length!==1)continue;
+   const value=localStorage.getItem(candidates[0]);
+   if(kind==='notes'){const rows=JSON.parse(value);if(!Array.isArray(rows)||rows.length>2000||!rows.every(valid))continue;}
+   else if(kind==='alignment'||kind==='label-alignment'){
+    const rows=JSON.parse(value),positions=kind==='alignment'?publishedPositions:publishedLabelPositions;
+    if(!rows||Array.isArray(rows)||typeof rows!=='object'||!Object.entries(rows).every(([id,p])=>positions.has(id)&&Array.isArray(p)&&p.length===2&&bounded(...p,config.minZoom)))continue;
+   }else if(value!=='true'&&value!=='false')continue;
+   localStorage.setItem(key,value);
+  }
+ }catch{status('Previous local settings could not be copied. Your saved data is still kept in this browser.',true);}
+}
+const slug=value=>value.toLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
 function status(message,sticky=false){clearTimeout(statusTimer);$('status').textContent=message;$('status').hidden=false;if(!sticky)statusTimer=setTimeout(()=>$('status').hidden=true,4500);}
+function locationOf(m){return map.unproject([m.x,m.y],config.coordinateZoom);}
+function pixelsOf(latlng){const p=map.project(latlng,config.coordinateZoom);return [Math.round(p.x),Math.round(p.y)];}
+function bounded(x,y,z=map.getZoom()){return Number.isFinite(x)&&Number.isFinite(y)&&Number.isFinite(z)&&x>=0&&y>=0&&x<=config.width&&y<=config.height&&z>=config.minZoom&&z<=config.maxZoom;}
 function valid(m){return m&&typeof m.id==='string'&&/^personal-[a-zA-Z0-9-]{1,80}$/.test(m.id)&&typeof m.name==='string'&&m.name.trim()&&m.name.length<=100&&typeof m.note==='string'&&m.note.length<=2000&&Object.hasOwn(categories,m.category)&&Number.isFinite(m.x)&&m.x>=0&&m.x<=config.width&&Number.isFinite(m.y)&&m.y>=0&&m.y<=config.height;}
-function persist(next){try{localStorage.setItem(KEY,JSON.stringify(next));personal=next;return true;}catch{status('Your browser could not save this change. Free some storage and try again.',true);return false;}}
-function locationOf(m){return map.unproject([m.x,m.y],config.maxNativeZoom);}
-function pixelsOf(latlng){const p=map.project(latlng,config.maxNativeZoom);return [Math.round(p.x),Math.round(p.y)];}
-function moveAlignedMarker(id,latlng){
- const point=pixelsOf(latlng);
- if(!Number.isFinite(point[0])||!Number.isFinite(point[1])||point[0]<0||point[1]<0||point[0]>config.width||point[1]>config.height){status('Choose a point inside the illustration.');return;}
- const marker=originals.find(m=>m.id===id);if(!marker)return;
- const next={...alignmentPositions,[id]:point};
- try{localStorage.setItem(ALIGN_KEY,JSON.stringify(next));alignmentPositions=next;}catch{status('Could not save alignment locally. Export your progress before leaving.',true);return;}
- marker.x=point[0];marker.y=point[1];pins.get(id)?.setLatLng(locationOf(marker));updateAlignmentStatus();
-}
-function updateAlignmentStatus(){if(!alignmentMode)return;const count=Object.keys(alignmentPositions).length;$('alignment-count').textContent=`${count} corrected of ${originals.length}`;}
-function restoreSelectedAlignment(){
- if(!selectedAlignmentId)return;
- const point=publishedPositions.get(selectedAlignmentId);if(!point)return;
- const next={...alignmentPositions};delete next[selectedAlignmentId];
- try{localStorage.setItem(ALIGN_KEY,JSON.stringify(next));alignmentPositions=next;}catch{status('Could not save the restored position.',true);return;}
- const marker=originals.find(m=>m.id===selectedAlignmentId);
- [marker.x,marker.y]=point;pins.get(marker.id)?.setLatLng(locationOf(marker));updateAlignmentStatus();status(`Restored ${marker.name} to its published position.`);
-}
-function exportAlignment(){const blob=new Blob([JSON.stringify({version:1,map:config.id,positions:alignmentPositions},null,2)],{type:'application/json'});const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='night-harbor-marker-alignment.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}
+function persist(next){try{localStorage.setItem(storageKey('notes'),JSON.stringify(next));personal=next;return true;}catch{status('Your browser could not save this change. Free some storage and try again.',true);return false;}}
+function download(data,name){const url=URL.createObjectURL(new Blob([JSON.stringify(data,null,2)],{type:'application/json'})),a=text('a','');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}
 function allMarkers(){return [...originals,...personal];}
 function visibleMarkers(){const terms=$('search').value.toLocaleLowerCase().trim().split(/\s+/).filter(Boolean);return allMarkers().filter(m=>enabled.has(m.category)&&terms.every(t=>(m.name+' '+m.category+' '+m.note).toLocaleLowerCase().includes(t)));}
-function refreshSearch(){$('clear-search').hidden=!$('search').value;render();}
-function popup(m){const n=document.createElement('div');n.append(text('div',m.category+(m.id.startsWith('personal-')?' · Your note':''),'tag'),text('h3',m.name));if(m.note)n.append(text('p',m.note));if(m.id.startsWith('personal-')){const edit=text('button','Edit note');edit.onclick=()=>openEditor(m);n.append(edit);}return n;}
-function choose(m){if(alignmentMode&&!m.id.startsWith('personal-')){selectedAlignmentId=m.id;status(`Selected ${m.name}. Drag its pin or click the correct position on the map.`,true);}map.setView(locationOf(m),Math.max(map.getZoom(),3),{animate:!matchMedia('(prefers-reduced-motion: reduce)').matches});if(!showPins){showPins=true;$('hide-pins').setAttribute('aria-pressed','true');render();}pins.get(m.id)?.openPopup();if(mobileLayout.matches)setPanel(false);}
-function render(){for(const pin of pins.values())pin.remove();pins.clear();const list=$('results');list.replaceChildren();const matches=visibleMarkers();$('count').textContent=matches.length+' places';for(const m of matches){const color=categories[m.category][1];const pinFace=text('span','');pinFace.style.setProperty('--pin',color);pinFace.append(markerSymbol(m));const icon=L.divIcon({className:'pin',html:pinFace,iconSize:[25,25],iconAnchor:[12,25],popupAnchor:[0,-23]});const canAlign=alignmentMode&&!m.id.startsWith('personal-');const pin=L.marker(locationOf(m),{icon,title:m.name,keyboard:true,riseOnHover:true,draggable:canAlign}).bindPopup(popup(m));pin.on('click',()=>{if(canAlign){selectedAlignmentId=m.id;status(`Selected ${m.name}. Drag this pin or click its correct position.`,true);}map.panTo(locationOf(m),{animate:!matchMedia('(prefers-reduced-motion: reduce)').matches});});if(canAlign)pin.on('dragend',()=>moveAlignedMarker(m.id,pin.getLatLng()));pin.bindTooltip(()=>text('span',m.name),{direction:'top',offset:[0,-23]});if(showPins)pin.addTo(map);pins.set(m.id,pin);const b=text('button','','place');const glyph=text('span','','symbol');glyph.append(markerSymbol(m));b.append(glyph);const label=text('span','');label.append(text('strong',m.name),text('small',m.category+(m.id.startsWith('personal-')?' · Personal note':'')));b.append(label);b.onclick=()=>choose(m);list.append(b);}if(!matches.length)list.append(text('p','No places found. Try another name or enable more categories.','empty'));}
-function setPanel(open){if(!mobileLayout.matches)desktopPanelOpen=open;$('journal').classList.toggle('closed',!open);$('toggle-panel').setAttribute('aria-expanded',String(open));setTimeout(()=>map?.invalidateSize({pan:false}),0);}
-function cancelPlacement(){placing=false;document.body.classList.remove('placing');$('cancel-place').hidden=true;$('status').hidden=true;}
+function refreshSearch(){$('clear-search').hidden=!$('search').value;drawMarkers();}
+function copyButton(place){const b=text('button','Copy link','copy-place');b.type='button';b.onclick=()=>copyLink(place);return b;}
+function popup(m){const n=text('div','');n.append(text('div',m.category+(m.id.startsWith('personal-')?' · Your note':''),'tag'),text('h3',m.name));if(m.note)n.append(text('p',m.note));n.append(copyButton(m));if(m.id.startsWith('personal-')){const edit=text('button','Edit note');edit.onclick=()=>openEditor(m);n.append(edit);}return n;}
+function placePopup(p){const n=text('div','');n.append(text('div',p.kind==='hidden'?'Hidden area':'Place name','tag'),text('h3',p.name));if(p.note)n.append(text('p',p.note));n.append(copyButton(p));return n;}
+function choose(m){
+ if(alignmentMode&&!m.id.startsWith('personal-'))selectAlignment(m,'marker');
+ if(!enabled.has(m.category)||!pins.has(m.id)||!showPins){enabled.add(m.category);showPins=true;$('search').value='';updateCategoryButtons();drawMarkers();}
+ openPlace({...m,kind:'marker'},Math.max(map.getZoom(),config.defaultView.placeZoom));
+}
+function openPlace(p,zoom=config.defaultView.placeZoom){
+ if(alignmentMode&&p.kind==='label')selectAlignment(p,'label');
+ sharedPin?.remove();sharedPin=null;
+ applyingView=true;activePlace=p;
+ map.setView(locationOf(p),zoom,{animate:false});
+ if(p.kind==='marker'){const pin=pins.get(p.id);if(pin&&!map.hasLayer(pin))pin.addTo(map);pin?.openPopup();}
+ else {if(p.kind==='hidden')hiddenController?.show(p.id);L.popup({autoPan:false}).setLatLng(locationOf(p)).setContent(placePopup(p)).openOn(map);}
+ activePlace=p;applyingView=false;if(compact())setPanel(false);scheduleUrl();
+}
+function drawMarkers(){
+ for(const pin of pins.values())pin.remove();pins.clear();const list=$('results');list.replaceChildren();
+ const matches=visibleMarkers();$('count').textContent=matches.length+' places';
+ for(const m of matches){
+  const face=text('span','');face.style.setProperty('--pin',categories[m.category][1]);face.append(markerSymbol(m));
+  const icon=m.category==='Class trainer'?trainerIcon(m):L.divIcon({className:'pin',html:face,iconSize:[25,25],iconAnchor:[12,25],popupAnchor:[0,-23]});
+  const canAlign=alignmentMode&&!m.id.startsWith('personal-');
+  const pin=L.marker(locationOf(m),{icon,title:m.name,keyboard:true,riseOnHover:true,draggable:canAlign}).bindPopup(popup(m),{autoPan:false});
+  pin.on('click',()=>choose(m));if(canAlign){pin.on('dragstart',()=>selectAlignment(m,'marker'));pin.on('dragend',()=>moveAlignedMarker(m.id,pin.getLatLng()));}
+  pin.bindTooltip(()=>text('span',m.name),{direction:'top',offset:[0,-23]});if(showPins)pin.addTo(map);pins.set(m.id,pin);
+  const b=text('button','','place'),glyph=text('span','','symbol');glyph.append(markerSymbol(m));b.append(glyph);
+  const label=text('span','');label.append(text('strong',m.name),text('small',m.category+(m.id.startsWith('personal-')?' · Personal note':'')));b.append(label);b.onclick=()=>choose(m);list.append(b);
+ }
+ // Place names and hidden areas can be found even when their visual layer hides.
+ const terms=$('search').value.toLocaleLowerCase().trim().split(/\s+/).filter(Boolean);
+ if(terms.length){for(const p of placeIndex.filter(p=>p.kind!=='marker'&&terms.every(t=>p.name.toLocaleLowerCase().includes(t)))){const b=text('button','','place');const label=text('span','');label.append(text('strong',p.name),text('small',p.kind==='hidden'?'Hidden area':'Place name'));b.append(label);b.onclick=()=>openPlace(p,Math.max(config.defaultView.placeZoom,p.minZoom||0));list.append(b);}}
+ $('count').textContent=list.childElementCount+' places';
+ if(!list.childElementCount)list.append(text('p','No places found. Try another name or enable more categories.','empty'));
+ schedulePlaceLabels();
+}
+function setPanel(open){if(!compact())desktopPanelOpen=open;$('journal').classList.toggle('closed',!open);for(const id of ['toggle-panel','embed-guide'])$(id).setAttribute('aria-expanded',String(open));setTimeout(()=>map?.invalidateSize({pan:false}),0);}
+function updateCategoryButtons(){for(const b of $('categories').children)b.setAttribute('aria-pressed',String(enabled.has(b.dataset.category)));$('hide-pins').setAttribute('aria-pressed',String(showPins));}
+function cancelPlacement(){placing=false;document.body.classList.remove('placing');$('cancel-place').hidden=true;}
 function openEditor(m){draft={...m};$('editor-title').textContent=personal.some(p=>p.id===m.id)?'Your discovery':'A new discovery';$('name').value=m.name;$('category').value=m.category;$('note').value=m.note;$('delete').hidden=!personal.some(p=>p.id===m.id);$('editor').showModal();$('name').focus();}
 function closeEditor(){draft=null;$('editor').close();}
-function hashView(){const c=map.project(map.getCenter(),config.maxNativeZoom);return '#view='+[map.getZoom().toFixed(2),Math.round(c.x),Math.round(c.y)].join(',');}
-async function init(){try{const responses=await Promise.all([fetch('data/map.json'),fetch('data/markers.json?v=3',{cache:'no-store'})]);if(responses.some(r=>!r.ok))throw Error('Map data unavailable');[config,originals]=await Promise.all(responses.map(r=>r.json()));publishedPositions=new Map(originals.map(m=>[m.id,[m.x,m.y]]));
-if(alignmentMode){try{const saved=JSON.parse(localStorage.getItem(ALIGN_KEY)||'{}');if(!saved||Array.isArray(saved)||typeof saved!=='object')throw Error();for(const [id,point] of Object.entries(saved)){if(!originals.some(m=>m.id===id)||!Array.isArray(point)||point.length!==2||!point.every(Number.isFinite)||point[0]<0||point[1]<0||point[0]>config.width||point[1]>config.height)throw Error();}alignmentPositions=saved;for(const m of originals)if(saved[m.id])[m.x,m.y]=saved[m.id];}catch{status('Saved alignment could not be read; starting from published positions.',true);}}
-map=L.map('map',{crs:L.CRS.Simple,minZoom:0,maxZoom:6,zoomSnap:.25,zoomDelta:.5,zoomControl:false,attributionControl:true,maxBoundsViscosity:.8});
-const bounds=L.latLngBounds(map.unproject([0,config.height],4),map.unproject([config.width,0],4));
-map.setMaxBounds(bounds.pad(1));
-L.tileLayer('assets/tiles/night-harbor/{z}/{x}/{y}.webp?v='+encodeURIComponent(config.tileRevision||'v12'),{tileSize:256,minZoom:0,maxZoom:6,maxNativeZoom:4,noWrap:true,bounds,keepBuffer:1,attribution:'Illustrated fan atlas · Not an official game map'}).on('tileerror',()=>status('A map tile could not load. Check your connection and reload.')).addTo(map);
-const fit=()=>map.fitBounds(bounds,{padding:[18,18],animate:false});fit();
-const v=location.hash.match(/^#view=([\d.]+),(-?[\d.]+),(-?[\d.]+)$/);if(v){const [z,x,y]=v.slice(1).map(Number);if([z,x,y].every(Number.isFinite)&&z>=0&&z<=6&&x>=0&&x<=config.width&&y>=0&&y<=config.height)map.setView(map.unproject([x,y],4),z);}
-try{const saved=JSON.parse(localStorage.getItem(KEY)||'[]');if(!Array.isArray(saved)||saved.length>2000||!saved.every(valid))throw Error();personal=saved;}catch{status('Saved notes could not be read. Import a valid backup to recover them.',true);}
-for(const [kind,[symbol]] of Object.entries(categories)){const b=text('button','');b.setAttribute('aria-pressed','true');b.append(markerSymbol({category:kind,name:''}),text('span',kind));b.onclick=()=>{enabled.has(kind)?enabled.delete(kind):enabled.add(kind);b.setAttribute('aria-pressed',String(enabled.has(kind)));render();};$('categories').append(b);const option=text('option',kind);option.value=kind;$('category').append(option);}
-$('all-categories').onclick=()=>{enabled=new Set(Object.keys(categories));for(const b of $('categories').children)b.setAttribute('aria-pressed','true');render();};
-$('search').oninput=refreshSearch;$('clear-search').onclick=()=>{$('search').value='';refreshSearch();$('search').focus();};$('zoom-in').onclick=()=>map.zoomIn();$('zoom-out').onclick=()=>map.zoomOut();$('fit').onclick=fit;
-$('hide-pins').onclick=()=>{showPins=!showPins;$('hide-pins').setAttribute('aria-pressed',String(showPins));render();};
-$('toggle-panel').onclick=()=>setPanel($('journal').classList.contains('closed'));setPanel(!mobileLayout.matches);
-mobileLayout.addEventListener('change',()=>setPanel(mobileLayout.matches?false:desktopPanelOpen));
-if(alignmentMode){$('alignment-tools').hidden=false;$('add').hidden=true;$('alignment-export').onclick=exportAlignment;$('alignment-restore').onclick=restoreSelectedAlignment;updateAlignmentStatus();}
-$('add').onclick=()=>{map.closePopup();placing=true;document.body.classList.add('placing');$('cancel-place').hidden=false;status('Click the map to place your personal marker.',true);if(mobileLayout.matches)setPanel(false);};
-$('cancel-place').onclick=cancelPlacement;document.addEventListener('keydown',e=>{if(e.key==='Escape')cancelPlacement();});
-map.on('click',e=>{if(alignmentMode&&selectedAlignmentId){moveAlignedMarker(selectedAlignmentId,e.latlng);return;}if(!placing)return;const p=map.project(e.latlng,4);if(p.x<0||p.y<0||p.x>config.width||p.y>config.height){status('Choose a position inside Night Harbor.');return;}cancelPlacement();openEditor({id:'personal-'+crypto.randomUUID(),name:'',note:'',category:'Personal',x:Math.round(p.x),y:Math.round(p.y)});});
-$('cancel-edit').onclick=closeEditor;$('editor').addEventListener('close',()=>draft=null);
-$('marker-form').onsubmit=e=>{e.preventDefault();if(!draft)return;const m={...draft,name:$('name').value.trim(),note:$('note').value,category:$('category').value};if(!valid(m))return;if(personal.length>=2000&&!personal.some(p=>p.id===m.id)){status('You have reached the 2,000-note limit. Export and remove older notes.');return;}if(persist([...personal.filter(p=>p.id!==m.id),m])){closeEditor();enabled.add(m.category);for(const b of $('categories').children)b.setAttribute('aria-pressed',String(enabled.has(b.lastChild.textContent)));$('search').value='';refreshSearch();choose(m);status('Marker saved to your field notes.');}};
-$('delete').onclick=()=>{if(draft&&persist(personal.filter(p=>p.id!==draft.id))){closeEditor();render();status('Personal marker deleted.');}};
-$('export').onclick=()=>{const blob=new Blob([JSON.stringify({version:1,map:config.id,markers:personal},null,2)],{type:'application/json'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='night-harbor-field-notes.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);};
-$('import').onclick=()=>$('import-file').click();$('import-file').onchange=async e=>{try{const file=e.target.files[0];if(!file)return;if(file.size>5000000)throw Error('File exceeds 5 MB.');const data=JSON.parse(await file.text());if(data.version!==1||data.map!==config.id||!Array.isArray(data.markers)||!data.markers.every(valid))throw Error('Not a valid Night Harbor field-notes file.');const merged=new Map(personal.map(m=>[m.id,m]));for(const m of data.markers)merged.set(m.id,{id:m.id,name:m.name.trim(),category:m.category,note:m.note,x:m.x,y:m.y});if(merged.size>2000)throw Error('The combined notes exceed 2,000 markers.');if(persist([...merged.values()])){render();status('Notes imported. Matching IDs updated; other notes kept.');}}catch(e){status('Import failed: '+e.message,true);}finally{$('import-file').value='';}};
-$('share').onclick=async()=>{const url=new URL(location.href);url.hash=hashView();history.replaceState(null,'',url);try{await navigator.clipboard.writeText(url.href);status('View link copied. Personal notes are not included.');}catch{status('This view is now in the address bar. Copy its URL to share.',true);}};
-map.on('zoomend',()=>{$('zoom-label').textContent=Math.round(2**(map.getZoom()-4)*100)+'% · NIGHT HARBOR';$('zoom-in').disabled=map.getZoom()>=6;$('zoom-out').disabled=map.getZoom()<=0;});
-refreshSearch();document.body.dataset.ready='true';
-}catch(e){status('The atlas could not load. Please reload the page. '+e.message,true);}}
+function selectAlignment(row,kind){selectedAlignmentId=row.id;selectedAlignmentKind=kind;schedulePlaceLabels();status(`Selected ${row.name}. Drag it or click the correct position on the map.`,true);}
+function updateAlignmentStatus(){$('alignment-count').textContent=`${Object.keys(alignmentPositions).length} of ${originals.length} markers · ${Object.keys(alignmentLabelPositions).length} of ${labelData.labels.length} labels corrected`;}
+function moveAlignedLabel(id,latlng){
+ const row=labelData.labels.find(r=>r.id===id);if(!row)return;
+ const point=pixelsOf(latlng);
+ if(!bounded(...point)){labelPins.get(id)?.setLatLng(locationOf(row));status('Choose a point inside the illustration.');return;}
+ const next={...alignmentLabelPositions,[id]:point};
+ try{localStorage.setItem(storageKey('label-alignment'),JSON.stringify(next));alignmentLabelPositions=next;}catch{labelPins.get(id)?.setLatLng(locationOf(row));status('Could not save alignment locally. Export your progress before leaving.',true);return;}
+ [row.x,row.y]=point;labelPins.get(id)?.setLatLng(locationOf(row));selectAlignment(row,'label');map.closePopup();updateAlignmentStatus();buildPlaceIndex();schedulePlaceLabels();scheduleUrl();
+}
+function moveAlignedMarker(id,latlng){
+ const point=pixelsOf(latlng);if(!bounded(...point)){status('Choose a point inside the illustration.');return;}
+ const m=originals.find(m=>m.id===id);if(!m)return;const next={...alignmentPositions,[id]:point};
+ try{localStorage.setItem(storageKey('alignment'),JSON.stringify(next));alignmentPositions=next;}catch{status('Could not save alignment locally. Export your progress before leaving.',true);return;}
+ [m.x,m.y]=point;pins.get(id)?.setLatLng(locationOf(m));updateAlignmentStatus();buildPlaceIndex();schedulePlaceLabels();scheduleUrl();
+}
+function restoreSelectedAlignment(){
+ if(selectedAlignmentKind==='label'){
+  const point=publishedLabelPositions.get(selectedAlignmentId),row=labelData.labels.find(r=>r.id===selectedAlignmentId);if(!point||!row)return;
+  const next={...alignmentLabelPositions};delete next[row.id];
+  try{localStorage.setItem(storageKey('label-alignment'),JSON.stringify(next));alignmentLabelPositions=next;}catch{status('Could not save the restored position.',true);return;}
+  [row.x,row.y]=point;labelPins.get(row.id)?.setLatLng(locationOf(row));map.closePopup();updateAlignmentStatus();buildPlaceIndex();schedulePlaceLabels();status(`Restored ${row.name}.`);return;
+ }
+ const point=publishedPositions.get(selectedAlignmentId);if(!point)return;const next={...alignmentPositions};delete next[selectedAlignmentId];
+ try{localStorage.setItem(storageKey('alignment'),JSON.stringify(next));alignmentPositions=next;}catch{status('Could not save the restored position.',true);return;}
+ const m=originals.find(m=>m.id===selectedAlignmentId);[m.x,m.y]=point;pins.get(m.id)?.setLatLng(locationOf(m));updateAlignmentStatus();buildPlaceIndex();status(`Restored ${m.name}.`);
+}
+function exportAlignment(){download({version:1,map:config.id,tileRevision:config.tileRevision,positions:alignmentPositions,labels:alignmentLabelPositions},`${config.id}-alignment.json`);}
+function restoreStorage(){
+ migratePreviousStorage();
+ personal=[];alignmentPositions={};alignmentLabelPositions={};selectedAlignmentId=null;selectedAlignmentKind='marker';$('legacy-notes').hidden=true;
+ try{const saved=JSON.parse(localStorage.getItem(storageKey('notes'))||'[]');if(!Array.isArray(saved)||saved.length>2000||!saved.every(valid))throw Error();personal=saved;}catch{status('Saved notes could not be read. Import a valid backup to recover them.',true);}
+ if(alignmentMode){try{const saved=JSON.parse(localStorage.getItem(storageKey('alignment'))||'{}');if(!saved||Array.isArray(saved)||typeof saved!=='object')throw Error();for(const [id,p] of Object.entries(saved))if(!originals.some(m=>m.id===id)||!Array.isArray(p)||p.length!==2||!bounded(...p,config.minZoom))throw Error();alignmentPositions=saved;for(const m of originals)if(saved[m.id])[m.x,m.y]=saved[m.id];}catch{status('Saved alignment could not be read; using published positions.',true);}}
+ if(alignmentMode){try{const saved=JSON.parse(localStorage.getItem(storageKey('label-alignment'))||'{}');if(!saved||Array.isArray(saved)||typeof saved!=='object')throw Error();for(const [id,p] of Object.entries(saved))if(!publishedLabelPositions.has(id)||!Array.isArray(p)||p.length!==2||!bounded(...p,config.minZoom))throw Error();alignmentLabelPositions=saved;for(const row of labelData.labels)if(saved[row.id])[row.x,row.y]=saved[row.id];}catch{status('Saved label alignment could not be read; using published positions.',true);}}
+ const legacy=config.legacyStorage;
+ if(legacy?.notesKey){try{const saved=JSON.parse(localStorage.getItem(legacy.notesKey)||'[]');if(Array.isArray(saved)&&saved.length){$('legacy-notes').hidden=false;$('legacy-export').onclick=()=>download({version:1,map:config.id,tileRevision:legacy.notesRevision,markers:saved},`${config.id}-${legacy.notesRevision}-field-notes.json`);}}catch{}}
+}
+let labelData={labels:[],trainers:[]},hiddenData={areas:[],routes:[]};
+function buildPlaceIndex(){
+ placeIndex=[...allMarkers().map(m=>({...m,kind:'marker'})),...labelData.labels.map(p=>({...p,note:'',kind:'label'}))];
+ for(const a of [...hiddenData.areas,...(hiddenData.additionalAreas||[])]){
+  const points=a.rings.flat();if(!points.length)continue;
+  const xs=points.map(p=>p[0]),ys=points.map(p=>p[1]);
+  placeIndex.push({id:a.id,name:a.name,slug:a.slug,x:(Math.min(...xs)+Math.max(...xs))/2,y:(Math.min(...ys)+Math.max(...ys))/2,kind:'hidden',note:a.approximate?'Approximate outline.':''});
+ }
+ for(const p of hiddenData.destinations||[])placeIndex.push({...p,x:p.xy[0],y:p.xy[1],kind:'hidden'});
+}
+function findPlace(value){buildPlaceIndex();const p=placeIndex.find(p=>p.id===value)||placeIndex.find(p=>p.slug===value||slug(p.name)===value);return p?.labelId?placeIndex.find(row=>row.id===p.labelId)||p:p;}
+function viewUrl(place=activePlace){
+ const url=new URL(location.href),c=map.project(map.getCenter(),config.coordinateZoom);url.href=url.href.split('#')[0];url.searchParams.set('map',config.id);
+ url.searchParams.set('x',String(Math.round(Math.max(0,Math.min(config.width,c.x))*100)/100));url.searchParams.set('y',String(Math.round(Math.max(0,Math.min(config.height,c.y))*100)/100));url.searchParams.set('z',String(map.getZoom()));
+ if(place&&!place.id.startsWith('personal-'))url.searchParams.set('place',place.id);else url.searchParams.delete('place');
+ return url;
+}
+function syncUrl(){if(!map||loading)return;const url=viewUrl();history.replaceState({map:config.id},'',url);document.querySelector('meta[property="og:url"]').content=url.href;}
+function scheduleUrl(){clearTimeout(urlTimer);if(!loading)urlTimer=setTimeout(syncUrl,250);}
+async function copyLink(place){
+ const url=viewUrl(place===undefined?activePlace:place);
+ if(place){url.searchParams.set('x',String(place.x));url.searchParams.set('y',String(place.y));url.searchParams.set('z',String(Math.max(map.getZoom(),config.defaultView.placeZoom)));}
+ // Alignment drafts are local editing state, not part of a shared destination.
+ url.searchParams.delete('align');
+ try{const policy=document.permissionsPolicy||document.featurePolicy;if(!navigator.clipboard?.writeText||(policy&&!policy.allowsFeature('clipboard-write')))throw Error('Clipboard unavailable');await navigator.clipboard.writeText(url.href);status('Link copied. Personal notes are not included.');}
+ catch{$('link-value').value=url.href;$('link-dialog').showModal();$('link-value').select();}
+}
+function applyLocation(url){
+ applyingView=true;activePlace=null;sharedPin?.remove();sharedPin=null;map.closePopup();
+ const q=url.searchParams,wanted=q.get('place');let warning='';
+ const values=['x','y','z'].map(k=>q.has(k)&&q.get(k).trim()!==''?Number(q.get(k)):NaN);
+ if(wanted){const p=findPlace(wanted);if(p){if(p.kind==='marker'){enabled.add(p.category);showPins=true;$('search').value='';updateCategoryButtons();drawMarkers();}const z=Number.isFinite(values[2])&&values[2]>=config.minZoom&&values[2]<=config.maxZoom?values[2]:config.defaultView.placeZoom;openPlace(p,z);applyingView=false;return;}warning='That place was not found on this map.';}
+ if(bounded(...values)){map.setView(locationOf({x:values[0],y:values[1]}),values[2],{animate:false});sharedPin=L.circleMarker(locationOf({x:values[0],y:values[1]}),{radius:6,color:'rgb(113,61,25)',weight:2,fillColor:'#fff1cb',fillOpacity:.8,interactive:false}).addTo(map);}
+ else{
+  const legacy=('#'+(url.href.split('#')[1]||'')).match(/^#view=([\d.]+),(-?[\d.]+),(-?[\d.]+)$/),p=legacy?.slice(1).map(Number);
+  if(p&&bounded(p[1],p[2],p[0]))map.setView(locationOf({x:p[1],y:p[2]}),p[0],{animate:false});
+  else{fitMap();if(['x','y','z'].some(k=>q.has(k)))warning='Invalid map coordinates; showing the default view.';}
+ }
+ applyingView=false;if(warning)status(warning);scheduleUrl();
+}
+function fitMap(){activePlace=null;const d=config.defaultView;if(d.mode==='point')map.setView(locationOf(d),d.z,{animate:false});else map.fitBounds(mapBounds(),{padding:[d.padding,d.padding],animate:false});}
+function mapBounds(){return L.latLngBounds(map.unproject([0,config.height],config.coordinateZoom),map.unproject([config.width,0],config.coordinateZoom));}
+function updateTitles(){
+ document.title=config.title+' · MnMaps';document.querySelector('meta[name="description"]').content=config.description;
+ document.querySelector('meta[property="og:title"]').content=document.title;document.querySelector('meta[property="og:description"]').content=config.description;
+ $('breadcrumb').textContent=config.breadcrumb;$('cartouche-kicker').textContent=config.cartoucheKicker;$('map-name').textContent=config.title;$('map-subtitle').textContent=config.subtitle;
+ $('map-frame').setAttribute('aria-label',config.title+' illustrated map');
+ for(const s of document.querySelectorAll('.map-select'))s.value=config.id;
+ const a=config.attribution,footer=$('map-attribution');footer.replaceChildren(text('span',a.text+' '));
+ for(const [title,href] of [[a.sourceTitle,a.sourceUrl],[a.license,a.licenseUrl]]){if(!href)continue;const link=text('a',title);link.href=href;link.target='_blank';link.rel='noopener';footer.append(link,text('span',' · '));}
+ $('about-attribution').textContent=a.changes||a.text;
+ const credits=$('about-map-links');credits.replaceChildren();
+ for(const [title,href] of [[a.sourceTitle,a.sourceUrl],[a.license,a.licenseUrl]]){if(!href)continue;const link=text('a',title);link.href=href;link.target='_blank';link.rel='noopener';credits.append(link,text('span',' · '));}
+}
+const localPath=p=>typeof p==='string'&&/^[a-zA-Z0-9_./{}-]+$/.test(p)&&!p.startsWith('/')&&!p.split('/').includes('..');
+async function fetchData(path,empty){if(path===null)return empty;if(!localPath(path))throw Error('Invalid local data path');const r=await fetch(path,{cache:'no-store'});if(!r.ok)throw Error('Map data unavailable: '+path);return r.json();}
+function validateRegistry(data){
+ if(data.version!==1||!Array.isArray(data.maps)||!data.maps.length||!data.maps.some(m=>m.id===data.defaultMap)||new Set(data.maps.map(m=>m.id)).size!==data.maps.length)throw Error('Invalid map registry');
+ for(const c of data.maps){if(!/^[a-z0-9-]+$/.test(c.id)||!c.title||!c.description||![c.width,c.height,c.coordinateZoom,c.minZoom,c.maxZoom,c.maxNativeZoom,c.tileSize].every(Number.isFinite)||c.width<=0||c.height<=0||c.maxZoom<c.minZoom||!localPath(c.tilePath)||!localPath(c.markersFile)||!c.defaultView)throw Error('Invalid map configuration');}
+ return data;
+}
+async function loadMap(id,url=new URL(location.href),push=false){
+ const serial=++loadSerial;clearTimeout(urlTimer);loading=true;document.body.dataset.ready='false';
+ const requested=registry.maps.find(c=>c.id===id),next=requested||registry.maps.find(c=>c.id===registry.defaultMap);
+ for(const s of document.querySelectorAll('.map-select'))s.disabled=true;
+ try{
+  const [markers,labels,hidden]=await Promise.all([fetchData(next.markersFile,[]),fetchData(next.labelsFile,{labels:[],trainers:[]}),fetchData(next.hiddenAreasFile,{areas:[],routes:[]})]);
+  if(serial!==loadSerial)return;
+  if(!Array.isArray(markers)||!Array.isArray(labels.labels)||!Array.isArray(labels.trainers)||!Array.isArray(hidden.areas))throw Error('Invalid map feature data');
+  disposeLabels();hiddenController?.dispose();map?.remove();pins.clear();map=null;
+  config=next;originals=markers;labelData=labels;hiddenData=hidden;publishedPositions=new Map(originals.map(m=>[m.id,[m.x,m.y]]));publishedLabelPositions=new Map(labels.labels.map(r=>[r.id,[r.x,r.y]]));
+  activePlace=null;sharedPin=null;cancelPlacement();if($('editor').open)closeEditor();$('search').value='';enabled=new Set(Object.keys(categories));showPins=true;updateCategoryButtons();
+  alignmentMode=url.searchParams.has('align');document.body.classList.toggle('aligning',alignmentMode);restoreStorage();updateTitles();
+  map=L.map('map',{crs:L.CRS.Simple,minZoom:config.minZoom,maxZoom:config.maxZoom,zoomSnap:.25,zoomDelta:.5,zoomControl:false,attributionControl:true,maxBoundsViscosity:1});
+  const bounds=mapBounds();map.setMaxBounds(bounds);
+  L.tileLayer(config.tilePath+'?v='+encodeURIComponent(config.tileRevision),{tileSize:config.tileSize,minZoom:config.minZoom,maxZoom:config.maxZoom,maxNativeZoom:config.maxNativeZoom,noWrap:true,bounds,keepBuffer:1,attribution:text('span',config.attribution.map).outerHTML}).on('tileerror',()=>status('A map tile could not load. Please reload.')).addTo(map);
+  fitMap();disposeLabels=setupPlaceLabels(labelData);hiddenController=setupHiddenAreas(map,config,hiddenData);
+  buildPlaceIndex();refreshSearch();setPanel(!compact()&&desktopPanelOpen);$('hidden-controls').hidden=!config.hiddenAreasFile;$('alignment-tools').hidden=!alignmentMode;$('add').hidden=alignmentMode;updateAlignmentStatus();
+  map.on('movestart',()=>{if(!applyingView){activePlace=null;}});
+  map.on('moveend zoomend',()=>{updateZoom();scheduleUrl();});
+  map.on('popupclose',()=>{if(!applyingView){activePlace=null;scheduleUrl();}});
+  map.on('click',e=>{
+   if(alignmentMode&&selectedAlignmentId){(selectedAlignmentKind==='label'?moveAlignedLabel:moveAlignedMarker)(selectedAlignmentId,e.latlng);return;}
+   if(!placing)return;const [x,y]=pixelsOf(e.latlng);if(!bounded(x,y)){status('Choose a position inside '+config.title+'.');return;}
+   cancelPlacement();openEditor({id:'personal-'+crypto.randomUUID(),name:'',note:'',category:'Personal',x,y});
+  });
+  if(push){url.searchParams.set('map',config.id);for(const k of ['place','x','y','z'])url.searchParams.delete(k);url.href=url.href.split('#')[0];history.pushState({map:config.id},'',url);}
+  applyLocation(url);updateZoom();loading=false;document.body.dataset.ready='true';syncUrl();
+  if(!requested&&id)status('Unknown map; showing '+config.title+'.');
+ }catch(e){if(serial!==loadSerial)return;loading=false;document.body.dataset.ready=map?'true':'false';status('The atlas could not load. '+e.message,true);if(map)syncUrl();}
+ finally{if(serial===loadSerial)for(const s of document.querySelectorAll('.map-select')){s.disabled=false;if(config)s.value=config.id;}}
+}
+function updateZoom(){$('zoom-label').textContent=Math.round(2**(map.getZoom()-config.coordinateZoom)*100)+'% · '+config.title;$('zoom-in').disabled=map.getZoom()>=config.maxZoom;$('zoom-out').disabled=map.getZoom()<=config.minZoom;}
+async function importNotes(file){
+ if(file.size>5000000)throw Error('File exceeds 5 MB.');const data=JSON.parse(await file.text());
+ if(data.tileRevision!==config.tileRevision)throw Error('These notes use another map revision. Keep the backup and reposition them on this edition.');
+ if(data.version!==1||data.map!==config.id||!Array.isArray(data.markers)||!data.markers.every(valid))throw Error('Not a valid '+config.title+' field-notes file.');
+ const merged=new Map(personal.map(m=>[m.id,m]));for(const m of data.markers)merged.set(m.id,{id:m.id,name:m.name.trim(),category:m.category,note:m.note,x:m.x,y:m.y});
+ if(merged.size>2000)throw Error('The combined notes exceed 2,000 markers.');if(persist([...merged.values()])){buildPlaceIndex();drawMarkers();status('Notes imported. Matching IDs updated; other notes kept.');}
+}
+function setupControls(){
+ $('about').onclick=()=>$('about-dialog').showModal();$('close-about').onclick=()=>$('about-dialog').close();
+ for(const kind of Object.keys(categories)){const b=text('button','');b.dataset.category=kind;b.setAttribute('aria-pressed','true');b.append(markerSymbol({category:kind,name:''}),text('span',kind==='Class trainer'?'Class trainers':kind));b.onclick=()=>{enabled.has(kind)?enabled.delete(kind):enabled.add(kind);updateCategoryButtons();drawMarkers();};$('categories').append(b);const option=text('option',kind);option.value=kind;$('category').append(option);}
+ $('all-categories').onclick=()=>{enabled=new Set(Object.keys(categories));updateCategoryButtons();drawMarkers();};
+ $('search').oninput=refreshSearch;$('clear-search').onclick=()=>{$('search').value='';refreshSearch();$('search').focus();};
+ $('zoom-in').onclick=()=>map.zoomIn();$('zoom-out').onclick=()=>map.zoomOut();$('fit').onclick=fitMap;
+ $('hide-pins').onclick=()=>{showPins=!showPins;updateCategoryButtons();drawMarkers();};
+ for(const id of ['toggle-panel','embed-guide'])$(id).onclick=()=>setPanel($('journal').classList.contains('closed'));
+ $('close-guide').onclick=()=>{setPanel(false);$(isEmbed?'embed-guide':'toggle-panel').focus();};
+ mobileLayout.addEventListener('change',()=>setPanel(compact()?false:desktopPanelOpen));
+ $('alignment-export').onclick=exportAlignment;$('alignment-restore').onclick=restoreSelectedAlignment;
+ $('add').onclick=()=>{map.closePopup();placing=true;document.body.classList.add('placing');$('cancel-place').hidden=false;status('Click the map to place your personal marker.',true);if(compact())setPanel(false);};
+ $('cancel-place').onclick=cancelPlacement;document.addEventListener('keydown',e=>{if(e.key==='Escape'){cancelPlacement();if(compact())setPanel(false);}});
+ $('cancel-edit').onclick=closeEditor;$('editor').addEventListener('close',()=>draft=null);
+ $('marker-form').onsubmit=e=>{e.preventDefault();if(!draft)return;const m={...draft,name:$('name').value.trim(),note:$('note').value,category:$('category').value};if(!valid(m))return;if(personal.length>=2000&&!personal.some(p=>p.id===m.id)){status('You have reached the 2,000-note limit. Export and remove older notes.');return;}if(persist([...personal.filter(p=>p.id!==m.id),m])){closeEditor();enabled.add(m.category);updateCategoryButtons();$('search').value='';buildPlaceIndex();refreshSearch();choose(m);status('Marker saved to your field notes.');}};
+ $('delete').onclick=()=>{if(draft&&persist(personal.filter(p=>p.id!==draft.id))){closeEditor();buildPlaceIndex();drawMarkers();status('Personal marker deleted.');}};
+ $('export').onclick=()=>download({version:1,map:config.id,tileRevision:config.tileRevision,markers:personal},`${config.id}-field-notes.json`);
+ $('import').onclick=()=>$('import-file').click();$('import-file').onchange=async e=>{try{if(e.target.files[0])await importNotes(e.target.files[0]);}catch(e){status('Import failed: '+e.message,true);}finally{$('import-file').value='';}};
+ $('share').onclick=()=>copyLink();$('close-link').onclick=()=>$('link-dialog').close();
+ $('fullscreen').onclick=async()=>{try{if(document.fullscreenElement)await document.exitFullscreen();else await document.documentElement.requestFullscreen();}catch{status('Fullscreen is unavailable. Open the atlas in its own tab, or allow fullscreen on the iframe.');}};
+ document.addEventListener('fullscreenchange',()=>{$('fullscreen').setAttribute('aria-label',document.fullscreenElement?'Exit fullscreen':'Enter fullscreen');$('fullscreen').title=document.fullscreenElement?'Exit fullscreen':'Enter fullscreen';map?.invalidateSize({pan:false});});
+ for(const s of document.querySelectorAll('.map-select')){for(const c of registry.maps){const option=text('option',c.title);option.value=c.id;s.append(option);}s.onchange=()=>loadMap(s.value,new URL(location.href),true);}
+ window.addEventListener('popstate',()=>{const url=new URL(location.href);loadMap(url.searchParams.get('map')||registry.defaultMap,url);});
+}
+async function init(){try{registry=validateRegistry(await fetchData('data/maps.json'));setupControls();await loadMap(new URLSearchParams(location.search).get('map')||registry.defaultMap);}catch(e){status('The atlas could not load. '+e.message,true);}}
 init();

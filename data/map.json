@@ -3,7 +3,10 @@
   "title": "Night Harbor",
   "width": 3072,
   "height": 2688,
-  "maxNativeZoom": 4,
+  "maxNativeZoom": 5,
   "tileSize": 256,
-  "tileRevision": "v14"
+  "tileRevision": "v2",
+  "coordinateZoom": 4,
+  "maxZoom": 6,
+  "tilePath": "assets/tiles/night-harbor-v2/{z}/{x}/{y}.webp"
 }

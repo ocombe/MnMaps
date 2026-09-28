@@ -15,7 +15,7 @@ const tradePaths = {
   'Animal Taming': 'M7 13c-6 7 1 9 5 6 4 3 11 1 5-6l-5-3z M4 5c-3 0-3 5 0 5s3-5 0-5 M9 2c-3 0-3 5 0 5s3-5 0-5 M15 2c-3 0-3 5 0 5s3-5 0-5 M20 5c-3 0-3 5 0 5s3-5 0-5',
   'Cooking': 'M4 10h16l-2 11H6z M2 12h2m16 0h2 M3 7h18 M10 3h4 M8 1v2m8-2v2',
   'Jewelcrafting': 'M3 8l4-5h10l4 5-9 13z M3 8h18 M7 3l2 5 3 13 3-13 2-5',
-  'Brewing / Fermenting': 'M4 7h13v14H4z M17 9h3q3 0 2 4l-1 4h-4 M4 7C0 3 5 1 7 3c1-3 6-3 7 0 4-2 6 2 3 4 M8 11v7m5-7v7',
+  'Brewing / Fermenting': 'M4 7h13v 14H4z M17 9h3q3 0 2 4l-1 4h-4 M4 7C0 3 5 1 7 3c1-3 6-3 7 0 4-2 6 2 3 4 M8 11v7m5-7v7',
   'Spycraft': 'M17 10a7 7 0 1 0-14 0 7 7 0 1 0 14 0 M15 15l7 7 M6 10a4 4 0 0 1 4-4',
   'Tailoring': 'M6 15a3 3 0 1 0 0 6 3 3 0 1 0 0-6 M18 15a3 3 0 1 0 0 6 3 3 0 1 0 0-6 M8 16 19 3 M16 16 5 3',
   'Blacksmithing / Smelting': 'M2 9h20l-4 5h-5v4h5v3H5v-3h4v-4H5z M5 3h9v3H5z M10 1v8',

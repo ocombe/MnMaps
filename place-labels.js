@@ -1,0 +1,89 @@
+/* Community place names. Text only, no HTML input. */
+'use strict';
+let atlasLabels,trainerDetails=new Map(),labelPins=new Map(),schedulePlaceLabels=()=>{};
+function trainerIcon(m){
+ const detail=trainerDetails.get(m.id);
+ const face=text('span',detail?detail.abbreviations.join(' · '):'CLASS','trainer-badge');
+ const width=Math.max(40,face.textContent.length*6.7+14);
+ const body=text('div','','trainer-body');body.append(text('i','','trainer-leader'),face);
+ return L.divIcon({className:'trainer-pin',html:body,iconSize:[width,25],iconAnchor:[width/2,32],popupAnchor:[0,-30]});
+}
+function setupPlaceLabels(data){
+ labelPins.clear();
+ atlasLabels=data;trainerDetails=new Map(data.trainers.map(r=>[r.id,r]));
+ const key=storageKey('place-names'),toggle=$('place-names-toggle'),showAll=$('alignment-all-labels');
+ showAll.checked=false;showAll.onchange=()=>schedulePlaceLabels();
+ try{toggle.checked=localStorage.getItem(key)!=='false';}catch{toggle.checked=true;}
+ const pane=map.createPane('placeNames');pane.style.zIndex=alignmentMode?'650':'450';pane.style.pointerEvents='none';
+ const arrows={north:'↑',south:'↓',west:'←',east:'→',northwest:'↖'};
+ const entries=data.labels.slice().sort((a,b)=>b.priority-a.priority).map(row=>{
+  const face=text('span',(row.kind==='exit'?arrows[row.arrow]+' ':'')+row.name,'place-name '+row.kind);
+  const icon=L.divIcon({className:'place-name-anchor',html:face,iconSize:[0,0],iconAnchor:[0,0]});
+  const marker=L.marker(locationOf(row),{icon,pane:'placeNames',title:row.name,interactive:alignmentMode,keyboard:alignmentMode,draggable:alignmentMode,bubblingMouseEvents:false});
+  if(alignmentMode){
+   marker.on('click',()=>{selectAlignment(row,'label');map.closePopup();});
+   marker.on('dragstart',()=>{selectAlignment(row,'label');map.closePopup();});
+   marker.on('dragend',()=>moveAlignedLabel(row.id,marker.getLatLng()));
+  }
+  labelPins.set(row.id,marker);
+  return {row,face,marker};
+ });
+ let frame;
+ const intersects=(a,b)=>a.left<b.right+4&&a.right>b.left-4&&a.top<b.bottom+3&&a.bottom>b.top-3;
+ function layout(){
+  frame=null;
+  const view=$('map').getBoundingClientRect(),zoom=map.getZoom();
+  const trainersVisible=zoom>=3.25||(enabled.size===1&&enabled.has('Class trainer'));
+  for(const pin of pins.values())if(pin.options.icon?.options.className==='trainer-pin'){
+   if(showPins&&trainersVisible){if(!map.hasLayer(pin))pin.addTo(map);}else pin.remove();
+  }
+  const occupied=[...document.querySelectorAll('#map .pin, #map .hidden-route, #map .leaflet-tooltip, .map-title, .embed-toolbar, .map-tools, .compass, .leaflet-popup')]
+   .filter(el=>el.getClientRects().length&&el.style.opacity!=='0').map(el=>el.getBoundingClientRect());
+  const badgeRects=[];
+  const chromeRects=[...document.querySelectorAll('.map-title,.embed-toolbar,.map-tools,.compass,.leaflet-popup')].filter(e=>e.getClientRects().length&&e.style.opacity!=='0').map(e=>e.getBoundingClientRect());
+  for(const face of document.querySelectorAll('#map .trainer-badge')){
+   let offset=[0,0],best=Infinity;
+   // Guild badges retain their true anchor via a fine leader when displaced.
+   for(const [dx,dy] of [[0,0],[0,-30],[0,30],[44,-20],[-44,-20],[65,0],[-65,0],[0,-58],[0,58],[80,40],[-80,40],[80,-45],[-80,-45],[0,85],[0,-85],[105,0],[-105,0]]){
+    face.style.transform=`translate(${dx}px,${dy}px)`;
+    const rect=face.getBoundingClientRect(),outside=rect.left<view.left+5||rect.right>view.right-5||rect.top<view.top+5||rect.bottom>view.bottom-16;
+    const score=occupied.filter(r=>intersects(rect,r)).length+100*badgeRects.filter(r=>intersects(rect,r)).length+500*chromeRects.filter(r=>intersects(rect,r)).length+(outside?1000:0);
+    if(score<best){best=score;offset=[dx,dy];}if(!score)break;
+   }
+   const [dx,dy]=offset;face.style.transform=`translate(${dx}px,${dy}px)`;
+   const leader=face.previousElementSibling;
+   leader.style.height=Math.hypot(dx,dy-20)+'px';
+   leader.style.transform=`rotate(${Math.atan2(-dx,dy-20)}rad)`;
+   occupied.push(face.getBoundingClientRect());badgeRects.push(face.getBoundingClientRect());
+  }
+  if(!toggle.checked){for(const e of entries)e.marker.remove();return;}
+  const ordered=entries.slice().sort((a,b)=>Number(selectedAlignmentKind==='label'&&selectedAlignmentId===b.row.id&&alignmentMode)-Number(selectedAlignmentKind==='label'&&selectedAlignmentId===a.row.id&&alignmentMode)||b.row.priority-a.row.priority);
+  for(const {row,face,marker} of ordered){
+   if(zoom<row.minZoom&&!(alignmentMode&&showAll.checked)){marker.remove();continue;}
+   const p=map.latLngToContainerPoint(locationOf(row));
+   if(p.x<0||p.y<0||p.x>view.width||p.y>view.height){marker.remove();continue;}
+   if(!map.hasLayer(marker))marker.addTo(map);
+   face.style.fontSize=(row.kind==='district'?Math.min(21,15+Math.max(0,zoom-2)*1.5):row.kind==='exit'?13:12)+'px';
+   const selected=alignmentMode&&selectedAlignmentKind==='label'&&selectedAlignmentId===row.id;
+   face.classList.toggle('selected',selected);marker.setZIndexOffset(selected?1000:0);
+   face.style.visibility='hidden';
+   let accepted=false;
+   // Small offsets keep names close to their anchors; lower priority names hide
+   // if none fits. Screen-space rectangles include actual text and marker sizes.
+   for(const [dx,dy] of (alignmentMode?[[0,0]]:[[0,0],[0,23],[0,-29],[26,17],[-26,17]])){
+    face.style.transform=`translate(calc(-50% + ${dx}px),calc(-50% + ${dy}px))`;
+    const rect=face.getBoundingClientRect();
+    if(rect.left<view.left+16||rect.right>view.right-16||rect.top<view.top+16||rect.bottom>view.bottom-30||(selected?chromeRects:occupied).some(r=>intersects(rect,r)))continue;
+    occupied.push(rect);accepted=true;break;
+   }
+   face.style.visibility=accepted?'visible':'hidden';
+  }
+ }
+ schedulePlaceLabels=()=>{if(frame)cancelAnimationFrame(frame);frame=requestAnimationFrame(layout);};
+ toggle.onchange=()=>{try{localStorage.setItem(key,String(toggle.checked));}catch{status('Place-name preference could not be saved.');}schedulePlaceLabels();};
+ map.on('zoomend moveend resize layeradd layerremove',schedulePlaceLabels);
+ schedulePlaceLabels();
+ document.fonts.ready.then(schedulePlaceLabels);
+ const currentMap=map,handler=schedulePlaceLabels;
+ return ()=>{cancelAnimationFrame(frame);currentMap.off('zoomend moveend resize layeradd layerremove',handler);schedulePlaceLabels=()=>{};};
+}
