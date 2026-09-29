@@ -311,6 +311,19 @@
       "x": 4609,
       "y": 3532,
       "level": "lower"
+    },
+    {
+      "id": "class-rogue",
+      "abbreviations": [
+        "ROG"
+      ],
+      "classes": [
+        "Rogue"
+      ],
+      "building": "Rogue trainer",
+      "x": 2293,
+      "y": 4818,
+      "level": "lower"
     }
   ],
   "version": 1

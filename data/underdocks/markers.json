@@ -320,5 +320,14 @@
     "level": "lower",
     "note": "",
     "category": "Class trainer"
+  },
+  {
+    "id": "class-rogue",
+    "name": "Rogue trainer",
+    "x": 2293,
+    "y": 4818,
+    "level": "lower",
+    "note": "Somewhere in the rogue back cave; position to confirm in game.",
+    "category": "Class trainer"
   }
 ]
