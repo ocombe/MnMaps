@@ -181,6 +181,9 @@ async function changeLevel(id,place=null,zoom=map.getZoom()){
  history.pushState({map:config.id,level:id},'',url);ownView=true;await loadMap(config.id,url);
 }
 function mapBounds(){return L.latLngBounds(map.unproject([0,config.height],config.coordinateZoom),map.unproject([config.width,0],config.coordinateZoom));}
+function appendAttributionLinks(parent,a){
+ for(const [title,href] of [[a.sourceTitle,a.sourceUrl],[a.license,a.licenseUrl]]){if(!href)continue;const link=text('a',title);link.href=href;link.target='_blank';link.rel='noopener';parent.append(link,text('span',' · '));}
+}
 function updateTitles(){
  document.title=config.title+' · MnMaps';document.querySelector('meta[name="description"]').content=config.description;
  document.querySelector('meta[property="og:title"]').content=document.title;document.querySelector('meta[property="og:description"]').content=config.description;
@@ -190,10 +193,10 @@ function updateTitles(){
  $('map-frame').setAttribute('aria-label',config.title+' illustrated map');
  for(const s of document.querySelectorAll('.map-select'))s.value=config.id;
  const a=config.attribution,footer=$('map-attribution');footer.replaceChildren(text('span',a.text+' '));
- for(const [title,href] of [[a.sourceTitle,a.sourceUrl],[a.license,a.licenseUrl]]){if(!href)continue;const link=text('a',title);link.href=href;link.target='_blank';link.rel='noopener';footer.append(link,text('span',' · '));}
+ appendAttributionLinks(footer,a);
  $('about-attribution').textContent=a.changes||a.text;
  const credits=$('about-map-links');credits.replaceChildren();
- for(const [title,href] of [[a.sourceTitle,a.sourceUrl],[a.license,a.licenseUrl]]){if(!href)continue;const link=text('a',title);link.href=href;link.target='_blank';link.rel='noopener';credits.append(link,text('span',' · '));}
+ appendAttributionLinks(credits,a);
 }
 const localPath=p=>typeof p==='string'&&/^[a-zA-Z0-9_./{}-]+$/.test(p)&&!p.startsWith('/')&&!p.split('/').includes('..');
 async function fetchData(path,empty){if(path===null)return empty;if(!localPath(path))throw Error('Invalid local data path');const r=await fetch(path,{cache:'no-store'});if(!r.ok)throw Error('Map data unavailable: '+path);return r.json();}

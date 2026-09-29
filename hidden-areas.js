@@ -6,7 +6,7 @@ function setupHiddenAreas(map,config,data){
  let group=null,active=primary?.lower,levelStacks=[];
  const layers=new Map(),stack=new Set(primary?[primary.lower,primary.upper]:[]);
  const swap=document.getElementById('hidden-swap');
- const label=value=>{const n=document.createElement('span');n.textContent=value;return n;};
+ const label=value=>text('span',value);
  const position=xy=>map.unproject(xy,config.coordinateZoom);
  const isStacked=id=>stack.has(id)||levelStacks.some(s=>s.upperAreas.includes(id)||s.lowerAreas.includes(id));
  const isInactive=id=>(stack.has(id)&&id!==active)||levelStacks.some(s=>(s.active==='upper'?s.lowerAreas:s.upperAreas).includes(id));

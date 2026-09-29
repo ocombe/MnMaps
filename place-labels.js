@@ -28,6 +28,7 @@ function setupPlaceLabels(data){
   labelPins.set(row.id,marker);
   return {row,face,marker};
  });
+ const visibleElement=el=>el.getClientRects().length&&el.style.opacity!=='0';
  let frame;
  const intersects=(a,b)=>a.left<b.right+4&&a.right>b.left-4&&a.top<b.bottom+3&&a.bottom>b.top-3;
  function layout(){
@@ -38,9 +39,9 @@ function setupPlaceLabels(data){
    if(showPins&&trainersVisible){if(!map.hasLayer(pin))pin.addTo(map);}else pin.remove();
   }
   const occupied=[...document.querySelectorAll('#map .pin, #map .hidden-route, .map-title, .level-controls, .embed-toolbar, .map-tools, .compass, .leaflet-popup')]
-   .filter(el=>el.getClientRects().length&&el.style.opacity!=='0').map(el=>el.getBoundingClientRect());
+   .filter(visibleElement).map(el=>el.getBoundingClientRect());
   const badgeRects=[];
-  const chromeRects=[...document.querySelectorAll('.map-title,.level-controls,.embed-toolbar,.map-tools,.compass,.leaflet-popup')].filter(e=>e.getClientRects().length&&e.style.opacity!=='0').map(e=>e.getBoundingClientRect());
+  const chromeRects=[...document.querySelectorAll('.map-title,.level-controls,.embed-toolbar,.map-tools,.compass,.leaflet-popup')].filter(visibleElement).map(e=>e.getBoundingClientRect());
   for(const face of document.querySelectorAll('#map .trainer-badge')){
    let offset=[0,0],best=Infinity;
    // Guild badges retain their true anchor via a fine leader when displaced.
