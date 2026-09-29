@@ -313,15 +313,6 @@
     "category": "Class trainer"
   },
   {
-    "id": "class-warrior-guildmaster",
-    "name": "Warrior guildmaster",
-    "x": 4865,
-    "y": 3788,
-    "level": "lower",
-    "note": "",
-    "category": "Class trainer"
-  },
-  {
     "id": "class-rogue",
     "name": "Rogue trainer",
     "x": 2549,

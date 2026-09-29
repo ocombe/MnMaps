@@ -300,19 +300,6 @@
       "level": "lower"
     },
     {
-      "id": "class-warrior-guildmaster",
-      "abbreviations": [
-        "WAR"
-      ],
-      "classes": [
-        "Warrior"
-      ],
-      "building": "Warrior guildmaster",
-      "x": 4865,
-      "y": 3788,
-      "level": "lower"
-    },
-    {
       "id": "class-rogue",
       "abbreviations": [
         "ROG"
