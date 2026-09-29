@@ -19,7 +19,7 @@ function setupPlaceLabels(data){
  const entries=data.labels.filter(atLevel).sort((a,b)=>b.priority-a.priority).map(row=>{
   const face=text('span',(row.kind==='exit'?arrows[row.arrow]+' ':'')+row.name,'place-name '+row.kind);
   const icon=L.divIcon({className:'place-name-anchor',html:face,iconSize:[0,0],iconAnchor:[0,0]});
-  const marker=L.marker(locationOf(row),{icon,pane:'placeNames',title:row.name,interactive:alignmentMode,keyboard:alignmentMode,draggable:alignmentMode,bubblingMouseEvents:false});
+  const marker=L.marker(locationOf(row),{icon,pane:'placeNames',alt:row.name,interactive:alignmentMode,keyboard:alignmentMode,draggable:alignmentMode,bubblingMouseEvents:false});
   if(alignmentMode){
    marker.on('click',()=>{selectAlignment(row,'label');map.closePopup();});
    marker.on('dragstart',()=>{selectAlignment(row,'label');map.closePopup();});

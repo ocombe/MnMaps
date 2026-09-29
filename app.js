@@ -73,7 +73,9 @@ function drawMarkers(){
   const face=text('span','');face.style.setProperty('--pin',categories[m.category][1]);face.append(markerSymbol(m));
   const icon=m.category==='Class trainer'?trainerIcon(m):L.divIcon({className:'pin',html:face,iconSize:[25,25],iconAnchor:[12,25],popupAnchor:[0,-23]});
   const canAlign=alignmentMode&&!m.id.startsWith('personal-');
-  const pin=L.marker(locationOf(m),{icon,title:m.name,keyboard:true,riseOnHover:true,draggable:canAlign}).bindPopup(popup(m),{autoPan:false});
+  const pin=L.marker(locationOf(m),{icon,alt:m.name,keyboard:true,riseOnHover:true,draggable:canAlign}).bindPopup(popup(m),{autoPan:false});
+  // The hover tooltip shows the name; an aria-label (not a title) keeps it accessible without a second browser tooltip.
+  pin.on('add',()=>pin.getElement()?.setAttribute('aria-label',m.name));
   pin.on('click',()=>choose(m));if(canAlign){pin.on('dragstart',()=>selectAlignment(m,'marker'));pin.on('dragend',()=>moveAlignedMarker(m.id,pin.getLatLng()));}
   pin.bindTooltip(()=>text('span',m.name),{direction:'top',offset:[0,-23]});if(showPins)pin.addTo(map);pins.set(m.id,pin);
   const b=text('button','','place'),glyph=text('span','','symbol');glyph.append(markerSymbol(m));b.append(glyph);

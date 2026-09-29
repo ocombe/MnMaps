@@ -54,7 +54,7 @@ function setupHiddenAreas(map,config,data){
    for(const endpoint of route.endpoints){
     const face=label(String(route.marker_number));
     const icon=L.divIcon({className:'hidden-route',html:face,iconSize:[24,24],iconAnchor:[12,12]});
-    group.addLayer(L.marker(position(endpoint.xy),{icon,title:'Route '+route.marker_number}).bindTooltip(()=>label('Route '+route.marker_number+' · Hidden area')));
+    group.addLayer(L.marker(position(endpoint.xy),{icon,alt:'Route '+route.marker_number}).bindTooltip(()=>label('Route '+route.marker_number+' · Hidden area')));
    }
   }
   for(const connection of data.connections||[]){
@@ -64,7 +64,7 @@ function setupHiddenAreas(map,config,data){
   for(const destination of data.destinations||[]){
    const icon=L.divIcon({className:'hidden-route',html:label('↪'),iconSize:[24,24],iconAnchor:[12,12]});
    // Destination text belongs to the place-name layer; connectors have hover text only.
-   group.addLayer(L.marker(position(destination.xy),{icon,title:destination.name}).bindTooltip(()=>label(destination.name),{direction:'right',offset:[10,0]}));
+   group.addLayer(L.marker(position(destination.xy),{icon,alt:destination.name}).bindTooltip(()=>label(destination.name),{direction:'right',offset:[10,0]}));
   }
  }
  function update(){
