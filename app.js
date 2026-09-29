@@ -188,7 +188,9 @@ function updateTitles(){
  document.title=config.title+' · MnMaps';document.querySelector('meta[name="description"]').content=config.description;
  document.querySelector('meta[property="og:title"]').content=document.title;document.querySelector('meta[property="og:description"]').content=config.description;
  $('breadcrumb').textContent=config.breadcrumb;$('cartouche-kicker').textContent=config.cartoucheKicker;$('map-name').textContent=config.title;$('map-subtitle').textContent=config.levelTitle||config.subtitle;
- const controls=$('level-controls');controls.replaceChildren();controls.hidden=!config.levels;document.body.classList.toggle('has-levels',!!config.levels);
+ // A page cached from before levels existed lacks this container; create it rather than failing to load.
+ let controls=$('level-controls');if(!controls){controls=document.createElement('div');controls.id='level-controls';controls.className='level-controls';controls.setAttribute('role','group');controls.setAttribute('aria-label','Map level');$('map-frame').append(controls);}
+ controls.replaceChildren();controls.hidden=!config.levels;document.body.classList.toggle('has-levels',!!config.levels);
  for(const level of config.levels||[]){const b=text('button',level.title);b.type='button';b.dataset.level=level.id;b.setAttribute('aria-pressed',String(level.id===config.levelId));b.onclick=()=>changeLevel(level.id);controls.append(b);}
  $('map-frame').setAttribute('aria-label',config.title+' illustrated map');
  for(const s of document.querySelectorAll('.map-select'))s.value=config.id;
