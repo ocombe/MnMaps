@@ -13,7 +13,8 @@ function setupHiddenAreas(map,config,data){
  function paint(){
   for(const [id,layer] of layers){
    const inactive=isInactive(id);
-   layer.setStyle({fillOpacity:inactive?.06:.46,weight:inactive?2:1.25,dashArray:inactive?'6 5':null});
+   // The inactive floor keeps a dark, heavier dashed outline so it stays visible on textured caves.
+   layer.setStyle({color:inactive?'#1d160d':layer.options.baseColor,opacity:inactive?.9:1,fillOpacity:inactive?.1:.46,weight:inactive?2.6:1.25,dashArray:inactive?'7 5':null});
    const el=layer.getElement();if(el){el.dataset.active=String(!inactive);if(isStacked(id))el.setAttribute('aria-pressed',String(!inactive));}
    if(!inactive)layer.bringToFront();
   }
@@ -23,6 +24,10 @@ function setupHiddenAreas(map,config,data){
   swap.setAttribute('aria-pressed',String(!!primary&&active===primary.upper&&!isInactive(active)));
   for(const s of levelStacks){s.button.textContent='Bring '+(s.active==='upper'?s.lowerLabel:s.upperLabel)+' forward';s.button.setAttribute('aria-pressed',String(s.active==='lower'));}
  }
+ const inRing=(p,ring)=>{let inside=false;for(let i=0,j=ring.length-1;i<ring.length;j=i++){const a=ring[i],b=ring[j];if((a.lat>p.lat)!==(b.lat>p.lat)&&p.lng<(b.lng-a.lng)*(p.lat-a.lat)/(b.lat-a.lat)+a.lng)inside=!inside;}return inside;};
+ const contains=(layer,p)=>{let hit=false;for(const ring of layer.getLatLngs())for(const r of (Array.isArray(ring[0])?ring:[ring]))if(inRing(p,r))hit=!hit;return hit;};
+ const partners=id=>stack.has(id)?[...stack]:levelStacks.filter(s=>s.upperAreas.includes(id)||s.lowerAreas.includes(id)).flatMap(s=>[...s.upperAreas,...s.lowerAreas]);
+ const activeUnder=(id,p)=>partners(id).some(other=>other!==id&&!isInactive(other)&&layers.has(other)&&contains(layers.get(other),p));
  function setActive(id){
   if(stack.has(id))active=id;
   for(const s of levelStacks){if(s.upperAreas.includes(id))s.active='upper';if(s.lowerAreas.includes(id))s.active='lower';}
@@ -39,9 +44,12 @@ function setupHiddenAreas(map,config,data){
    button.onclick=()=>{state.active=state.active==='upper'?'lower':'upper';paint();};details.append(button);return state;
   });
   for(const area of [...data.areas,...(data.additionalAreas||[])]){
-   const layer=L.polygon(area.rings.map(r=>r.map(position)),{color:area.color==='#eee57c'?'#756328':'#275877',fillColor:area.color,fillRule:'evenodd',smoothFactor:0,bubblingMouseEvents:false,className:'hidden-area'});
+   const baseColor=area.color==='#eee57c'?'#756328':'#275877';
+   const layer=L.polygon(area.rings.map(r=>r.map(position)),{color:baseColor,baseColor,fillColor:area.color,fillRule:'evenodd',smoothFactor:0,bubblingMouseEvents:false,className:'hidden-area'});
    const title=area.name+' · Hidden area'+(area.approximate?' · Approximate outline':'');
    layer.bindTooltip(()=>label(title),{sticky:true});
+   // Stacked floors also switch on hover, but only where the pointer is outside the floor already shown, so overlaps never flicker.
+   layer.on('mouseover',e=>{if(isStacked(area.id)&&isInactive(area.id)&&!activeUnder(area.id,e.latlng))setActive(area.id);});
    layer.on('click',()=>{if(isStacked(area.id))setActive(area.id);const p=findPlace(area.id);if(p)openPlace(p,Math.max(map.getZoom(),config.defaultView.placeZoom));});
    layer.on('add',()=>{
     const el=layer.getElement();el.dataset.area=area.id;el.setAttribute('aria-label',title);
