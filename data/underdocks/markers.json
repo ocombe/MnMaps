@@ -256,8 +256,8 @@
     "category": "Class trainer"
   },
   {
-    "id": "class-archer-fighter-ranger",
-    "name": "Archer / Fighter / Ranger trainers",
+    "id": "class-archer-warrior-ranger",
+    "name": "Archer / Warrior / Ranger trainers",
     "x": 4271,
     "y": 3503,
     "level": "lower",
@@ -313,8 +313,8 @@
     "category": "Class trainer"
   },
   {
-    "id": "class-fighter-guildmaster",
-    "name": "Fighter guildmaster",
+    "id": "class-warrior-guildmaster",
+    "name": "Warrior guildmaster",
     "x": 4609,
     "y": 3532,
     "level": "lower",

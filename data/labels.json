@@ -432,12 +432,12 @@
       "id": "class-3",
       "abbreviations": [
         "ARC",
-        "FTR",
+        "WAR",
         "RNG"
       ],
       "classes": [
         "Archer",
-        "Fighter",
+        "Warrior",
         "Ranger"
       ],
       "building": "Steel Talon Garrison",

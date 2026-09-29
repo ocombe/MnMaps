@@ -240,18 +240,18 @@
       "level": "lower"
     },
     {
-      "id": "class-archer-fighter-ranger",
+      "id": "class-archer-warrior-ranger",
       "abbreviations": [
         "ARC",
-        "FTR",
+        "WAR",
         "RNG"
       ],
       "classes": [
         "Archer",
-        "Fighter",
+        "Warrior",
         "Ranger"
       ],
-      "building": "Archer / Fighter / Ranger trainers",
+      "building": "Archer / Warrior / Ranger trainers",
       "x": 4271,
       "y": 3503,
       "level": "lower"
@@ -300,14 +300,14 @@
       "level": "lower"
     },
     {
-      "id": "class-fighter-guildmaster",
+      "id": "class-warrior-guildmaster",
       "abbreviations": [
-        "FTR GM"
+        "WAR GM"
       ],
       "classes": [
-        "Fighter"
+        "Warrior"
       ],
-      "building": "Fighter guildmaster",
+      "building": "Warrior guildmaster",
       "x": 4609,
       "y": 3532,
       "level": "lower"
