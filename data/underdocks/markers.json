@@ -329,5 +329,32 @@
     "level": "lower",
     "note": "Somewhere in the rogue back cave; position to confirm in game.",
     "category": "Class trainer"
+  },
+  {
+    "id": "trade-blacksmithing",
+    "name": "Blacksmithing / Smelting — harbour island",
+    "category": "Tradeskill",
+    "x": 3367,
+    "y": 4167,
+    "level": "lower",
+    "note": ""
+  },
+  {
+    "id": "trade-cooking",
+    "name": "Cooking — harbour island",
+    "category": "Tradeskill",
+    "x": 3515,
+    "y": 3853,
+    "level": "lower",
+    "note": ""
+  },
+  {
+    "id": "trade-lumberjacking",
+    "name": "Lumberjacking — north-east quay",
+    "category": "Tradeskill",
+    "x": 4613,
+    "y": 4310,
+    "level": "lower",
+    "note": ""
   }
 ]
