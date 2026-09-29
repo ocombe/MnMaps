@@ -1,6 +1,6 @@
 # MnMaps
 
-An illustrated community atlas of Monsters & Memories. Night Harbor is the first available map.
+An illustrated community atlas of Monsters & Memories, with Night Harbor and a local preview of Underdocks.
 
 **[Browse the atlas](https://ocombe.github.io/MnMaps/)**
 
@@ -12,10 +12,21 @@ Use **Copy link** in a popup or **Share this view** in the map toolbar. Links sh
 
 For example, link to `?map=night-harbor&place=wiki-4` or a view with `?map=night-harbor&x=1640&y=1015&z=5`.
 
+Underdocks has **Lower docks** and **Upper city** levels. Use the level buttons to
+keep the same view while switching. Lift popups offer **Go up** or **Go down**;
+their positions and connections are approximate, to confirm in game. Personal
+notes belong to the level where they were placed. Try
+`?map=underdocks&level=lower`, `?map=underdocks&level=upper`, or
+`?map=underdocks&level=lower&place=wiki-west-bank`.
+
 With `?align=1`, select a marker or place name, then drag it or click its new position. Corrections stay in this browser and can be restored or exported.
 
 Credits and licences
 --------------------
+
+Underdocks: **Community wiki map of the Underdocks · author to confirm**.
+Locations are approximate. Source page, author and usage terms remain to be
+confirmed; this local preview is pending that review.
 
 Place names and guild locations adapted from [Maggot's Night Harbor map](https://static.wikitide.net/monstersandmemorieswiki/5/5a/Night_harbor_V5.jpg) ([CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/)); positions adjusted to this map, 'Docs' corrected to 'Docks'. The adapted place-name and guild dataset in `data/labels.json` carries the same licence.
 

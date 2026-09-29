@@ -89,3 +89,10 @@ dialog{color:var(--foreground);background:var(--popover);border:1px solid var(--
 #about{border:0;background:transparent;text-decoration:underline;font-size:10px;padding:4px;color:var(--muted-foreground)}
 
 .alignment-label-toggle{display:flex;align-items:center;gap:8px;min-height:36px;font-size:12px;cursor:pointer}.alignment-label-toggle input{accent-color:var(--primary)}
+
+/* Optional registry levels share the same view and map controls. */
+.level-controls{position:absolute;top:137px;left:22px;z-index:550;display:flex;gap:4px;padding:4px;background:var(--card);border:1px solid var(--amber-border);border-radius:10px;box-shadow:var(--shadow);max-width:calc(100% - 78px)}
+.level-controls button{min-height:44px;padding:8px 12px;font-size:12px;white-space:nowrap}
+.level-controls button[aria-pressed="true"]{background:#5a3b22;border-color:var(--primary);color:#fff0cc}
+.embed .level-controls{top:136px;left:13px}
+@media(max-width:760px){.level-controls,.embed .level-controls{top:154px;left:14px}.level-controls button{padding:8px;font-size:11px}}

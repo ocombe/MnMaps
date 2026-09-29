@@ -1,0 +1,266 @@
+{
+  "map": "underdocks",
+  "tileRevision": "v1",
+  "coordinateZoom": 5,
+  "source": {
+    "title": "Keirvan's Underdocks bottom floor wiki map",
+    "url": "https://monstersandmemories.miraheze.org/wiki/File:UnderdocksBottomFloorCity.png",
+    "author": "Keirvan",
+    "license": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+    "changes": "Place names and locations adapted from Keirvan's Underdocks bottom floor map (CC BY-SA 4.0); positions adjusted to this map, abbreviations expanded."
+  },
+  "labels": [
+    {
+      "id": "wiki-apothecary",
+      "name": "Apothecary",
+      "x": 2396,
+      "y": 4618,
+      "level": "lower",
+      "approximate": true,
+      "note": "Approximate; to confirm in game. Western shore; exact shop entrance to confirm.",
+      "kind": "building",
+      "tier": "building",
+      "priority": 40,
+      "minZoom": 4.5
+    },
+    {
+      "id": "wiki-rogue-cave",
+      "name": "Rogue back cave",
+      "x": 2320,
+      "y": 4852,
+      "level": "lower",
+      "approximate": true,
+      "note": "Approximate; to confirm in game. In a cave behind the western buildings; entrance approximate.",
+      "kind": "building",
+      "tier": "building",
+      "priority": 40,
+      "minZoom": 4.5
+    },
+    {
+      "id": "wiki-stairs-up",
+      "name": "Stairs up",
+      "x": 2448,
+      "y": 5008,
+      "level": "lower",
+      "approximate": true,
+      "note": "Approximate; to confirm in game. Stairs on the western shore; destination to confirm in game.",
+      "kind": "building",
+      "tier": "building",
+      "priority": 40,
+      "minZoom": 4.5
+    },
+    {
+      "id": "wiki-druid-shaman-cave",
+      "name": "Druid / Shaman cave entrance",
+      "x": 2920,
+      "y": 5156,
+      "level": "lower",
+      "approximate": true,
+      "note": "Approximate; to confirm in game. Cave entrance; interior positions to confirm in game.",
+      "kind": "building",
+      "tier": "building",
+      "priority": 40,
+      "minZoom": 4.5
+    },
+    {
+      "id": "wiki-west-raft",
+      "name": "Raft — western shore",
+      "x": 2964,
+      "y": 4366,
+      "level": "lower",
+      "approximate": true,
+      "note": "Approximate; to confirm in game. Approximate crossing point; service and landing to confirm.",
+      "kind": "building",
+      "tier": "building",
+      "priority": 40,
+      "minZoom": 4.5
+    },
+    {
+      "id": "wiki-east-raft",
+      "name": "Raft — eastern shore",
+      "x": 3958,
+      "y": 3826,
+      "level": "lower",
+      "approximate": true,
+      "note": "Approximate; to confirm in game. Approximate crossing point; service and landing to confirm.",
+      "kind": "building",
+      "tier": "building",
+      "priority": 40,
+      "minZoom": 4.5
+    },
+    {
+      "id": "wiki-boat-de-city",
+      "name": "Boat to DE city",
+      "x": 3204,
+      "y": 3612,
+      "level": "lower",
+      "approximate": true,
+      "note": "Approximate; to confirm in game. Destination wording follows the community sketch; full name to confirm.",
+      "kind": "exit",
+      "tier": "exit",
+      "priority": 75,
+      "minZoom": 3.75,
+      "arrow": "northwest"
+    },
+    {
+      "id": "wiki-bath-house",
+      "name": "Bath house",
+      "x": 3586,
+      "y": 4378,
+      "level": "lower",
+      "approximate": true,
+      "note": "Approximate; to confirm in game. Basement.",
+      "kind": "building",
+      "tier": "building",
+      "priority": 40,
+      "minZoom": 4.5
+    },
+    {
+      "id": "wiki-butchers",
+      "name": "Butchers",
+      "x": 3378,
+      "y": 3838,
+      "level": "lower",
+      "approximate": true,
+      "note": "Approximate; to confirm in game. Two adjacent shops indicated by the sketch; exact doors to confirm.",
+      "kind": "building",
+      "tier": "building",
+      "priority": 40,
+      "minZoom": 4.5
+    },
+    {
+      "id": "wiki-bag-merchant",
+      "name": "Bag merchant",
+      "x": 3678,
+      "y": 4112,
+      "level": "lower",
+      "approximate": true,
+      "note": "Approximate; to confirm in game.",
+      "kind": "building",
+      "tier": "building",
+      "priority": 40,
+      "minZoom": 4.5
+    },
+    {
+      "id": "wiki-marshall-harding",
+      "name": "Marshal Harding",
+      "x": 4570,
+      "y": 3562,
+      "level": "lower",
+      "approximate": true,
+      "note": "Approximate; to confirm in game. Approximate courtyard position.",
+      "kind": "building",
+      "tier": "building",
+      "priority": 40,
+      "minZoom": 4.5
+    },
+    {
+      "id": "wiki-paymaster-elara-venn",
+      "name": "Paymaster Elara Venn",
+      "x": 4334,
+      "y": 3614,
+      "level": "lower",
+      "approximate": true,
+      "note": "Approximate; to confirm in game. 1st floor.",
+      "kind": "building",
+      "tier": "building",
+      "priority": 40,
+      "minZoom": 4.5
+    },
+    {
+      "id": "wiki-quartermaster",
+      "name": "Quartermaster",
+      "x": 4270,
+      "y": 3606,
+      "level": "lower",
+      "approximate": true,
+      "note": "Approximate; to confirm in game. Buy / sell weapons and armour.",
+      "kind": "building",
+      "tier": "building",
+      "priority": 40,
+      "minZoom": 4.5
+    },
+    {
+      "id": "wiki-northern-gates",
+      "name": "Northern Gates",
+      "x": 2782,
+      "y": 3256,
+      "level": "lower",
+      "approximate": true,
+      "note": "Approximate; to confirm in game. North-west bridge and gate approach; crossing point approximate.",
+      "kind": "exit",
+      "tier": "exit",
+      "priority": 75,
+      "minZoom": 3.75,
+      "arrow": "northwest"
+    }
+  ],
+  "trainers": [
+    {
+      "id": "class-beastlord",
+      "abbreviations": [
+        "BST"
+      ],
+      "classes": [
+        "Beastlord"
+      ],
+      "building": "Beastlord",
+      "x": 4468,
+      "y": 3268,
+      "level": "lower"
+    },
+    {
+      "id": "class-elementalist-wizard-enchanter",
+      "abbreviations": [
+        "ELE",
+        "WIZ",
+        "ENC"
+      ],
+      "classes": [
+        "Elementalist",
+        "Wizard",
+        "Enchanter"
+      ],
+      "building": "Elementalist / Wizard / Enchanter trainers",
+      "x": 4152,
+      "y": 3382,
+      "level": "lower"
+    },
+    {
+      "id": "class-archer-fighter-ranger",
+      "abbreviations": [
+        "ARC",
+        "FTR",
+        "RNG"
+      ],
+      "classes": [
+        "Archer",
+        "Fighter",
+        "Ranger"
+      ],
+      "building": "Archer / Fighter / Ranger trainers",
+      "x": 4312,
+      "y": 3584,
+      "level": "lower"
+    },
+    {
+      "id": "class-necromancer-cleric-shadowknight",
+      "abbreviations": [
+        "NEC",
+        "CLR",
+        "SHD"
+      ],
+      "classes": [
+        "Necromancer",
+        "Cleric",
+        "Shadowknight"
+      ],
+      "building": "Necromancer / Cleric / Shadowknight trainers",
+      "x": 4590,
+      "y": 4250,
+      "level": "lower"
+    }
+  ],
+  "version": 1
+}

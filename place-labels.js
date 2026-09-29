@@ -16,7 +16,7 @@ function setupPlaceLabels(data){
  try{toggle.checked=localStorage.getItem(key)!=='false';}catch{toggle.checked=true;}
  const pane=map.createPane('placeNames');pane.style.zIndex=alignmentMode?'650':'450';pane.style.pointerEvents='none';
  const arrows={north:'↑',south:'↓',west:'←',east:'→',northwest:'↖'};
- const entries=data.labels.slice().sort((a,b)=>b.priority-a.priority).map(row=>{
+ const entries=data.labels.filter(atLevel).sort((a,b)=>b.priority-a.priority).map(row=>{
   const face=text('span',(row.kind==='exit'?arrows[row.arrow]+' ':'')+row.name,'place-name '+row.kind);
   const icon=L.divIcon({className:'place-name-anchor',html:face,iconSize:[0,0],iconAnchor:[0,0]});
   const marker=L.marker(locationOf(row),{icon,pane:'placeNames',title:row.name,interactive:alignmentMode,keyboard:alignmentMode,draggable:alignmentMode,bubblingMouseEvents:false});
@@ -37,10 +37,10 @@ function setupPlaceLabels(data){
   for(const pin of pins.values())if(pin.options.icon?.options.className==='trainer-pin'){
    if(showPins&&trainersVisible){if(!map.hasLayer(pin))pin.addTo(map);}else pin.remove();
   }
-  const occupied=[...document.querySelectorAll('#map .pin, #map .hidden-route, #map .leaflet-tooltip, .map-title, .embed-toolbar, .map-tools, .compass, .leaflet-popup')]
+  const occupied=[...document.querySelectorAll('#map .pin, #map .hidden-route, #map .leaflet-tooltip, .map-title, .level-controls, .embed-toolbar, .map-tools, .compass, .leaflet-popup')]
    .filter(el=>el.getClientRects().length&&el.style.opacity!=='0').map(el=>el.getBoundingClientRect());
   const badgeRects=[];
-  const chromeRects=[...document.querySelectorAll('.map-title,.embed-toolbar,.map-tools,.compass,.leaflet-popup')].filter(e=>e.getClientRects().length&&e.style.opacity!=='0').map(e=>e.getBoundingClientRect());
+  const chromeRects=[...document.querySelectorAll('.map-title,.level-controls,.embed-toolbar,.map-tools,.compass,.leaflet-popup')].filter(e=>e.getClientRects().length&&e.style.opacity!=='0').map(e=>e.getBoundingClientRect());
   for(const face of document.querySelectorAll('#map .trainer-badge')){
    let offset=[0,0],best=Infinity;
    // Guild badges retain their true anchor via a fine leader when displaced.

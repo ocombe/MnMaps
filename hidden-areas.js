@@ -59,7 +59,7 @@ function setupHiddenAreas(map,config,data){
   }
   for(const connection of data.connections||[]){
    if(!Array.isArray(connection.path)||connection.path.length<2)continue;
-   group.addLayer(L.polyline(connection.path.map(position),{pane:'paths',color:'#62432a',weight:2,dashArray:'4 5',opacity:.85,interactive:false,className:'area-path'}));
+   const line=L.polyline(connection.path.map(position),{pane:'paths',color:connection.color||'#62432a',weight:connection.width||2,dashArray:connection.dashed===false?null:'4 5',opacity:connection.dashed===false?.55:.85,interactive:!!connection.name,className:'area-path'});if(connection.name)line.bindTooltip(()=>label(connection.name),{sticky:true});group.addLayer(line);
   }
   for(const destination of data.destinations||[]){
    const icon=L.divIcon({className:'hidden-route',html:label('↪'),iconSize:[24,24],iconAnchor:[12,12]});

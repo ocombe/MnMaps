@@ -2,7 +2,8 @@
 'use strict';
 const $=id=>document.getElementById(id);
 const text=(tag,value,cls)=>{const n=document.createElement(tag);n.textContent=value;if(cls)n.className=cls;return n;};
-const categories={'Bank':['▣','#916c30'],'Inn':['☾','#9a543a'],'Stable':['♞','#665e3e'],'Shady merchant':['♧','#785268'],'Tradeskill':['⚒','#385f60'],'Class trainer':['◈','#4e4668'],'Personal':['✧','#a04438']};
+const baseCategories={'Bank':['▣','#916c30'],'Inn':['☾','#9a543a'],'Stable':['♞','#665e3e'],'Shady merchant':['♧','#785268'],'Tradeskill':['⚒','#385f60'],'Class trainer':['◈','#4e4668'],'Personal':['✧','#a04438']};
+let categories={...baseCategories};
 const mobileLayout=matchMedia('(max-width: 760px)');
 let embedded=false;try{embedded=window.self!==window.top;}catch{embedded=true;}
 const isEmbed=embedded||new URLSearchParams(location.search).get('embed')==='1';
@@ -12,6 +13,8 @@ let registry,map,config,originals=[],personal=[],pins=new Map(),placeIndex=[],hi
 let enabled=new Set(Object.keys(categories)),showPins=true,placing=false,draft=null,statusTimer;
 let alignmentMode=false,selectedAlignmentId=null,selectedAlignmentKind='marker',alignmentPositions={},alignmentLabelPositions={},publishedPositions=new Map(),publishedLabelPositions=new Map();
 let desktopPanelOpen=true,disposeLabels=()=>{},loadSerial=0,loading=false,applyingView=false,urlTimer,activePlace=null,sharedPin=null;
+const atLevel=row=>!config.levels||!row.level||row.level===config.levelId;
+const validLevel=value=>value===undefined||!!config.levels?.some(l=>l.id===value);
 const storageKey=kind=>`mnmaps-${config.id}-${kind}-${config.tileRevision}`;
 function migratePreviousStorage(){
  if(!config.migratePreviousStorage)return;
@@ -39,14 +42,14 @@ function status(message,sticky=false){clearTimeout(statusTimer);$('status').text
 function locationOf(m){return map.unproject([m.x,m.y],config.coordinateZoom);}
 function pixelsOf(latlng){const p=map.project(latlng,config.coordinateZoom);return [Math.round(p.x),Math.round(p.y)];}
 function bounded(x,y,z=map.getZoom()){return Number.isFinite(x)&&Number.isFinite(y)&&Number.isFinite(z)&&x>=0&&y>=0&&x<=config.width&&y<=config.height&&z>=config.minZoom&&z<=config.maxZoom;}
-function valid(m){return m&&typeof m.id==='string'&&/^personal-[a-zA-Z0-9-]{1,80}$/.test(m.id)&&typeof m.name==='string'&&m.name.trim()&&m.name.length<=100&&typeof m.note==='string'&&m.note.length<=2000&&Object.hasOwn(categories,m.category)&&Number.isFinite(m.x)&&m.x>=0&&m.x<=config.width&&Number.isFinite(m.y)&&m.y>=0&&m.y<=config.height;}
+function valid(m){return m&&validLevel(m.level)&&typeof m.id==='string'&&/^personal-[a-zA-Z0-9-]{1,80}$/.test(m.id)&&typeof m.name==='string'&&m.name.trim()&&m.name.length<=100&&typeof m.note==='string'&&m.note.length<=2000&&Object.hasOwn(categories,m.category)&&Number.isFinite(m.x)&&m.x>=0&&m.x<=config.width&&Number.isFinite(m.y)&&m.y>=0&&m.y<=config.height;}
 function persist(next){try{localStorage.setItem(storageKey('notes'),JSON.stringify(next));personal=next;return true;}catch{status('Your browser could not save this change. Free some storage and try again.',true);return false;}}
 function download(data,name){const url=URL.createObjectURL(new Blob([JSON.stringify(data,null,2)],{type:'application/json'})),a=text('a','');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}
 function allMarkers(){return [...originals,...personal];}
-function visibleMarkers(){const terms=$('search').value.toLocaleLowerCase().trim().split(/\s+/).filter(Boolean);return allMarkers().filter(m=>enabled.has(m.category)&&terms.every(t=>(m.name+' '+m.category+' '+m.note).toLocaleLowerCase().includes(t)));}
+function visibleMarkers(){const terms=$('search').value.toLocaleLowerCase().trim().split(/\s+/).filter(Boolean);return allMarkers().filter(m=>atLevel(m)&&enabled.has(m.category)&&terms.every(t=>(m.name+' '+m.category+' '+m.note).toLocaleLowerCase().includes(t)));}
 function refreshSearch(){$('clear-search').hidden=!$('search').value;drawMarkers();}
 function copyButton(place){const b=text('button','Copy link','copy-place');b.type='button';b.onclick=()=>copyLink(place);return b;}
-function popup(m){const n=text('div','');n.append(text('div',m.category+(m.id.startsWith('personal-')?' · Your note':''),'tag'),text('h3',m.name));if(m.note)n.append(text('p',m.note));n.append(copyButton(m));if(m.id.startsWith('personal-')){const edit=text('button','Edit note');edit.onclick=()=>openEditor(m);n.append(edit);}return n;}
+function popup(m){const n=text('div','');n.append(text('div',m.category+(m.id.startsWith('personal-')?' · Your note':''),'tag'),text('h3',m.name));if(m.note)n.append(text('p',m.note));n.append(copyButton(m));if(m.toLevel){const b=text('button',m.direction==='up'?'Go up':'Go down','level-link');b.type='button';b.onclick=()=>changeLevel(m.toLevel,{...m,id:m.toMarker,level:m.toLevel,kind:'marker'});n.append(b);}if(m.id.startsWith('personal-')){const edit=text('button','Edit note');edit.onclick=()=>openEditor(m);n.append(edit);}return n;}
 function placePopup(p){const n=text('div','');n.append(text('div',p.kind==='hidden'?'Hidden area':'Place name','tag'),text('h3',p.name));if(p.note)n.append(text('p',p.note));n.append(copyButton(p));return n;}
 function choose(m){
  if(alignmentMode&&!m.id.startsWith('personal-'))selectAlignment(m,'marker');
@@ -54,6 +57,7 @@ function choose(m){
  openPlace({...m,kind:'marker'},Math.max(map.getZoom(),config.defaultView.placeZoom));
 }
 function openPlace(p,zoom=config.defaultView.placeZoom){
+ if(!atLevel(p)){changeLevel(p.level,p,zoom);return;}
  if(alignmentMode&&p.kind==='label')selectAlignment(p,'label');
  sharedPin?.remove();sharedPin=null;
  applyingView=true;activePlace=p;
@@ -118,7 +122,7 @@ function exportAlignment(){download({version:1,map:config.id,tileRevision:config
 function restoreStorage(){
  migratePreviousStorage();
  personal=[];alignmentPositions={};alignmentLabelPositions={};selectedAlignmentId=null;selectedAlignmentKind='marker';$('legacy-notes').hidden=true;
- try{const saved=JSON.parse(localStorage.getItem(storageKey('notes'))||'[]');if(!Array.isArray(saved)||saved.length>2000||!saved.every(valid))throw Error();personal=saved;}catch{status('Saved notes could not be read. Import a valid backup to recover them.',true);}
+ try{const saved=JSON.parse(localStorage.getItem(storageKey('notes'))||'[]');if(!Array.isArray(saved)||saved.length>2000||!saved.every(valid))throw Error();personal=saved.map(m=>config.levels&&!m.level?{...m,level:config.defaultLevel}:m);}catch{status('Saved notes could not be read. Import a valid backup to recover them.',true);}
  if(alignmentMode){try{const saved=JSON.parse(localStorage.getItem(storageKey('alignment'))||'{}');if(!saved||Array.isArray(saved)||typeof saved!=='object')throw Error();for(const [id,p] of Object.entries(saved))if(!originals.some(m=>m.id===id)||!Array.isArray(p)||p.length!==2||!bounded(...p,config.minZoom))throw Error();alignmentPositions=saved;for(const m of originals)if(saved[m.id])[m.x,m.y]=saved[m.id];}catch{status('Saved alignment could not be read; using published positions.',true);}}
  if(alignmentMode){try{const saved=JSON.parse(localStorage.getItem(storageKey('label-alignment'))||'{}');if(!saved||Array.isArray(saved)||typeof saved!=='object')throw Error();for(const [id,p] of Object.entries(saved))if(!publishedLabelPositions.has(id)||!Array.isArray(p)||p.length!==2||!bounded(...p,config.minZoom))throw Error();alignmentLabelPositions=saved;for(const row of labelData.labels)if(saved[row.id])[row.x,row.y]=saved[row.id];}catch{status('Saved label alignment could not be read; using published positions.',true);}}
  const legacy=config.legacyStorage;
@@ -126,17 +130,18 @@ function restoreStorage(){
 }
 let labelData={labels:[],trainers:[]},hiddenData={areas:[],routes:[]};
 function buildPlaceIndex(){
- placeIndex=[...allMarkers().map(m=>({...m,kind:'marker'})),...labelData.labels.map(p=>({...p,note:'',kind:'label'}))];
+ placeIndex=[...allMarkers().map(m=>({...m,kind:'marker'})),...labelData.labels.map(p=>({...p,note:p.note||'',kind:'label'}))];
  for(const a of [...hiddenData.areas,...(hiddenData.additionalAreas||[])]){
   const points=a.rings.flat();if(!points.length)continue;
   const xs=points.map(p=>p[0]),ys=points.map(p=>p[1]);
-  placeIndex.push({id:a.id,name:a.name,slug:a.slug,x:(Math.min(...xs)+Math.max(...xs))/2,y:(Math.min(...ys)+Math.max(...ys))/2,kind:'hidden',note:a.approximate?'Approximate outline.':''});
+  placeIndex.push({id:a.id,name:a.name,slug:a.slug,level:a.level,x:(Math.min(...xs)+Math.max(...xs))/2,y:(Math.min(...ys)+Math.max(...ys))/2,kind:'hidden',note:a.approximate?'Approximate outline.':''});
  }
  for(const p of hiddenData.destinations||[])placeIndex.push({...p,x:p.xy[0],y:p.xy[1],kind:'hidden'});
 }
 function findPlace(value){buildPlaceIndex();const p=placeIndex.find(p=>p.id===value)||placeIndex.find(p=>p.slug===value||slug(p.name)===value);return p?.labelId?placeIndex.find(row=>row.id===p.labelId)||p:p;}
 function viewUrl(place=activePlace){
  const url=new URL(location.href),c=map.project(map.getCenter(),config.coordinateZoom);url.href=url.href.split('#')[0];url.searchParams.set('map',config.id);
+ if(config.levels)url.searchParams.set('level',config.levelId);else url.searchParams.delete('level');
  url.searchParams.set('x',String(Math.round(Math.max(0,Math.min(config.width,c.x))*100)/100));url.searchParams.set('y',String(Math.round(Math.max(0,Math.min(config.height,c.y))*100)/100));url.searchParams.set('z',String(map.getZoom()));
  if(place&&!place.id.startsWith('personal-'))url.searchParams.set('place',place.id);else url.searchParams.delete('place');
  return url;
@@ -165,11 +170,19 @@ function applyLocation(url){
  applyingView=false;if(warning)status(warning);scheduleUrl();
 }
 function fitMap(){activePlace=null;const d=config.defaultView;if(d.mode==='point')map.setView(locationOf(d),d.z,{animate:false});else map.fitBounds(mapBounds(),{padding:[d.padding,d.padding],animate:false});}
+async function changeLevel(id,place=null,zoom=map.getZoom()){
+ if(!config.levels?.some(l=>l.id===id)||id===config.levelId)return;
+ const url=viewUrl(null),center=place?[place.x,place.y]:pixelsOf(map.getCenter());url.searchParams.set('level',id);url.searchParams.set('x',String(center[0]));url.searchParams.set('y',String(center[1]));url.searchParams.set('z',String(zoom));
+ if(place)url.searchParams.set('place',place.id);else url.searchParams.delete('place');
+ history.pushState({map:config.id,level:id},'',url);await loadMap(config.id,url);
+}
 function mapBounds(){return L.latLngBounds(map.unproject([0,config.height],config.coordinateZoom),map.unproject([config.width,0],config.coordinateZoom));}
 function updateTitles(){
  document.title=config.title+' · MnMaps';document.querySelector('meta[name="description"]').content=config.description;
  document.querySelector('meta[property="og:title"]').content=document.title;document.querySelector('meta[property="og:description"]').content=config.description;
- $('breadcrumb').textContent=config.breadcrumb;$('cartouche-kicker').textContent=config.cartoucheKicker;$('map-name').textContent=config.title;$('map-subtitle').textContent=config.subtitle;
+ $('breadcrumb').textContent=config.breadcrumb;$('cartouche-kicker').textContent=config.cartoucheKicker;$('map-name').textContent=config.title;$('map-subtitle').textContent=config.levelTitle||config.subtitle;
+ const controls=$('level-controls');controls.replaceChildren();controls.hidden=!config.levels;document.body.classList.toggle('has-levels',!!config.levels);
+ for(const level of config.levels||[]){const b=text('button',level.title);b.type='button';b.dataset.level=level.id;b.setAttribute('aria-pressed',String(level.id===config.levelId));b.onclick=()=>changeLevel(level.id);controls.append(b);}
  $('map-frame').setAttribute('aria-label',config.title+' illustrated map');
  for(const s of document.querySelectorAll('.map-select'))s.value=config.id;
  const a=config.attribution,footer=$('map-attribution');footer.replaceChildren(text('span',a.text+' '));
@@ -183,34 +196,39 @@ async function fetchData(path,empty){if(path===null)return empty;if(!localPath(p
 function validateRegistry(data){
  if(data.version!==1||!Array.isArray(data.maps)||!data.maps.length||!data.maps.some(m=>m.id===data.defaultMap)||new Set(data.maps.map(m=>m.id)).size!==data.maps.length)throw Error('Invalid map registry');
  for(const c of data.maps){if(!/^[a-z0-9-]+$/.test(c.id)||!c.title||!c.description||![c.width,c.height,c.coordinateZoom,c.minZoom,c.maxZoom,c.maxNativeZoom,c.tileSize].every(Number.isFinite)||c.width<=0||c.height<=0||c.maxZoom<c.minZoom||!localPath(c.tilePath)||!localPath(c.markersFile)||!c.defaultView)throw Error('Invalid map configuration');}
+ for(const c of data.maps)if(c.levels){if(!Array.isArray(c.levels)||!c.levels.length||new Set(c.levels.map(l=>l.id)).size!==c.levels.length||!c.levels.some(l=>l.id===c.defaultLevel)||!c.levels.every(l=>/^[a-z0-9-]+$/.test(l.id)&&l.title&&localPath(l.tilePath)))throw Error('Invalid map levels');}
  return data;
 }
 async function loadMap(id,url=new URL(location.href),push=false){
  const serial=++loadSerial;clearTimeout(urlTimer);loading=true;document.body.dataset.ready='false';
- const requested=registry.maps.find(c=>c.id===id),next=requested||registry.maps.find(c=>c.id===registry.defaultMap);
+ const requested=registry.maps.find(c=>c.id===id),base=requested||registry.maps.find(c=>c.id===registry.defaultMap);let next=base;
+ if(push)url.searchParams.delete('level');
  for(const s of document.querySelectorAll('.map-select'))s.disabled=true;
  try{
   const [markers,labels,hidden]=await Promise.all([fetchData(next.markersFile,[]),fetchData(next.labelsFile,{labels:[],trainers:[]}),fetchData(next.hiddenAreasFile,{areas:[],routes:[]})]);
   if(serial!==loadSerial)return;
   if(!Array.isArray(markers)||!Array.isArray(labels.labels)||!Array.isArray(labels.trainers)||!Array.isArray(hidden.areas))throw Error('Invalid map feature data');
+  const wanted=url.searchParams.get('place'),dest=[...markers,...labels.labels,...hidden.areas,...(hidden.additionalAreas||[]),...(hidden.destinations||[])].find(p=>wanted&&(p.id===wanted||p.slug===wanted||slug(p.name)===wanted));
+  if(base.levels){const level=base.levels.find(l=>l.id===(!push&&dest?.level?dest.level:url.searchParams.get('level')))||base.levels.find(l=>l.id===base.defaultLevel);next={...base,tilePath:level.tilePath,levelId:level.id,levelTitle:level.title};}
   disposeLabels();hiddenController?.dispose();map?.remove();pins.clear();map=null;
-  config=next;originals=markers;labelData=labels;hiddenData=hidden;publishedPositions=new Map(originals.map(m=>[m.id,[m.x,m.y]]));publishedLabelPositions=new Map(labels.labels.map(r=>[r.id,[r.x,r.y]]));
+  config=next;categories={...baseCategories,...(config.extraCategories||{})};setupCategoryControls();originals=markers;labelData=labels;hiddenData=hidden;publishedPositions=new Map(originals.map(m=>[m.id,[m.x,m.y]]));publishedLabelPositions=new Map(labels.labels.map(r=>[r.id,[r.x,r.y]]));
   activePlace=null;sharedPin=null;cancelPlacement();if($('editor').open)closeEditor();$('search').value='';enabled=new Set(Object.keys(categories));showPins=true;updateCategoryButtons();
   alignmentMode=url.searchParams.has('align');document.body.classList.toggle('aligning',alignmentMode);restoreStorage();updateTitles();
   map=L.map('map',{crs:L.CRS.Simple,minZoom:config.minZoom,maxZoom:config.maxZoom,zoomSnap:.25,zoomDelta:.5,zoomControl:false,attributionControl:true,maxBoundsViscosity:1});
   const bounds=mapBounds();map.setMaxBounds(bounds);
   L.tileLayer(config.tilePath+'?v='+encodeURIComponent(config.tileRevision),{tileSize:config.tileSize,minZoom:config.minZoom,maxZoom:config.maxZoom,maxNativeZoom:config.maxNativeZoom,noWrap:true,bounds,keepBuffer:1,attribution:text('span',config.attribution.map).outerHTML}).on('tileerror',()=>status('A map tile could not load. Please reload.')).addTo(map);
-  fitMap();disposeLabels=setupPlaceLabels(labelData);hiddenController=setupHiddenAreas(map,config,hiddenData);
-  buildPlaceIndex();refreshSearch();setPanel(!compact()&&desktopPanelOpen);$('hidden-controls').hidden=!config.hiddenAreasFile;$('alignment-tools').hidden=!alignmentMode;$('add').hidden=alignmentMode;updateAlignmentStatus();
+  const currentHidden={...hiddenData};for(const key of ['areas','additionalAreas','routes','connections','destinations','levelStacks'])if(Array.isArray(hiddenData[key]))currentHidden[key]=hiddenData[key].filter(atLevel);
+  fitMap();disposeLabels=setupPlaceLabels(labelData);hiddenController=setupHiddenAreas(map,config,currentHidden);
+  buildPlaceIndex();refreshSearch();setPanel(!compact()&&desktopPanelOpen);$('hidden-controls').hidden=!config.hiddenAreasFile||!(currentHidden.areas.length||(currentHidden.additionalAreas||[]).length);$('alignment-tools').hidden=!alignmentMode;$('add').hidden=alignmentMode;updateAlignmentStatus();
   map.on('movestart',()=>{if(!applyingView){activePlace=null;}});
   map.on('moveend zoomend',()=>{updateZoom();scheduleUrl();});
   map.on('popupclose',()=>{if(!applyingView){activePlace=null;scheduleUrl();}});
   map.on('click',e=>{
    if(alignmentMode&&selectedAlignmentId){(selectedAlignmentKind==='label'?moveAlignedLabel:moveAlignedMarker)(selectedAlignmentId,e.latlng);return;}
    if(!placing)return;const [x,y]=pixelsOf(e.latlng);if(!bounded(x,y)){status('Choose a position inside '+config.title+'.');return;}
-   cancelPlacement();openEditor({id:'personal-'+crypto.randomUUID(),name:'',note:'',category:'Personal',x,y});
+   cancelPlacement();openEditor({id:'personal-'+crypto.randomUUID(),name:'',note:'',category:'Personal',x,y,...(config.levels?{level:config.levelId}:{})});
   });
-  if(push){url.searchParams.set('map',config.id);for(const k of ['place','x','y','z'])url.searchParams.delete(k);url.href=url.href.split('#')[0];history.pushState({map:config.id},'',url);}
+  if(push){url.searchParams.set('map',config.id);for(const k of ['place','x','y','z','level'])url.searchParams.delete(k);url.href=url.href.split('#')[0];history.pushState({map:config.id},'',url);}
   applyLocation(url);updateZoom();loading=false;document.body.dataset.ready='true';syncUrl();
   if(!requested&&id)status('Unknown map; showing '+config.title+'.');
  }catch(e){if(serial!==loadSerial)return;loading=false;document.body.dataset.ready=map?'true':'false';status('The atlas could not load. '+e.message,true);if(map)syncUrl();}
@@ -221,12 +239,16 @@ async function importNotes(file){
  if(file.size>5000000)throw Error('File exceeds 5 MB.');const data=JSON.parse(await file.text());
  if(data.tileRevision!==config.tileRevision)throw Error('These notes use another map revision. Keep the backup and reposition them on this edition.');
  if(data.version!==1||data.map!==config.id||!Array.isArray(data.markers)||!data.markers.every(valid))throw Error('Not a valid '+config.title+' field-notes file.');
- const merged=new Map(personal.map(m=>[m.id,m]));for(const m of data.markers)merged.set(m.id,{id:m.id,name:m.name.trim(),category:m.category,note:m.note,x:m.x,y:m.y});
+ const merged=new Map(personal.map(m=>[m.id,m]));for(const m of data.markers)merged.set(m.id,{id:m.id,name:m.name.trim(),category:m.category,note:m.note,x:m.x,y:m.y,...(config.levels?{level:m.level||config.defaultLevel}:{})});
  if(merged.size>2000)throw Error('The combined notes exceed 2,000 markers.');if(persist([...merged.values()])){buildPlaceIndex();drawMarkers();status('Notes imported. Matching IDs updated; other notes kept.');}
+}
+function setupCategoryControls(){
+ $('categories').replaceChildren();$('category').replaceChildren();
+ for(const kind of Object.keys(categories)){const b=text('button','');b.dataset.category=kind;b.setAttribute('aria-pressed','true');b.append(markerSymbol({category:kind,name:''}),text('span',kind==='Class trainer'?'Class trainers':kind));b.onclick=()=>{enabled.has(kind)?enabled.delete(kind):enabled.add(kind);updateCategoryButtons();drawMarkers();};$('categories').append(b);const option=text('option',kind);option.value=kind;$('category').append(option);}
 }
 function setupControls(){
  $('about').onclick=()=>$('about-dialog').showModal();$('close-about').onclick=()=>$('about-dialog').close();
- for(const kind of Object.keys(categories)){const b=text('button','');b.dataset.category=kind;b.setAttribute('aria-pressed','true');b.append(markerSymbol({category:kind,name:''}),text('span',kind==='Class trainer'?'Class trainers':kind));b.onclick=()=>{enabled.has(kind)?enabled.delete(kind):enabled.add(kind);updateCategoryButtons();drawMarkers();};$('categories').append(b);const option=text('option',kind);option.value=kind;$('category').append(option);}
+
  $('all-categories').onclick=()=>{enabled=new Set(Object.keys(categories));updateCategoryButtons();drawMarkers();};
  $('search').oninput=refreshSearch;$('clear-search').onclick=()=>{$('search').value='';refreshSearch();$('search').focus();};
  $('zoom-in').onclick=()=>map.zoomIn();$('zoom-out').onclick=()=>map.zoomOut();$('fit').onclick=fitMap;

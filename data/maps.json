@@ -47,6 +47,61 @@
         "hiddenKey": "mnmaps-night-harbor-hidden-areas"
       },
       "migratePreviousStorage": true
+    },
+    {
+      "id": "underdocks",
+      "title": "Underdocks",
+      "subtitle": "Two levels beneath the city",
+      "cartoucheKicker": "The hidden harbour",
+      "breadcrumb": "Monsters & Memories / Underdocks",
+      "description": "An illustrated fan atlas of the Underdocks. Explore the lower docks and upper city, find places, and keep your own field notes.",
+      "width": 5632,
+      "height": 5984,
+      "minZoom": 0,
+      "maxNativeZoom": 5,
+      "maxZoom": 7,
+      "coordinateZoom": 5,
+      "tileSize": 256,
+      "tileRevision": "v1",
+      "tilePath": "assets/tiles/underdocks/lower/{z}/{x}/{y}.webp",
+      "markersFile": "data/underdocks/markers.json",
+      "labelsFile": "data/underdocks/labels.json",
+      "hiddenAreasFile": "data/underdocks/hidden-areas.json",
+      "defaultView": {
+        "mode": "fit",
+        "padding": 18,
+        "placeZoom": 5
+      },
+      "defaultLevel": "lower",
+      "levels": [
+        {
+          "id": "lower",
+          "title": "Lower docks",
+          "tilePath": "assets/tiles/underdocks/lower/{z}/{x}/{y}.webp"
+        },
+        {
+          "id": "upper",
+          "title": "Upper city",
+          "tilePath": "assets/tiles/underdocks/upper/{z}/{x}/{y}.webp"
+        }
+      ],
+      "extraCategories": {
+        "Lift": [
+          "↕",
+          "#64795b"
+        ]
+      },
+      "attribution": {
+        "map": "Illustrated fan atlas · Not an official game map",
+        "text": "Place names & locations adapted from Keirvan’s wiki map · approximate",
+        "sourceTitle": "Keirvan’s Underdocks bottom floor wiki map",
+        "sourceUrl": "https://monstersandmemories.miraheze.org/wiki/File:UnderdocksBottomFloorCity.png",
+        "license": "CC BY-SA 4.0",
+        "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+        "changes": "Place names and locations adapted from Keirvan's Underdocks bottom floor map (CC BY-SA 4.0); positions adjusted to this map, abbreviations expanded."
+      },
+      "hiddenPrimaryStack": null,
+      "legacyStorage": {}
     }
   ]
 }

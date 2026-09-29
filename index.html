@@ -5,8 +5,8 @@
  <meta name="theme-color" content="#16120e"><meta name="description" content="An illustrated community atlas of Monsters & Memories.">
  <meta property="og:title" content="MnMaps"><meta property="og:description" content="An illustrated community atlas of Monsters & Memories."><meta property="og:url" content=""><meta property="og:type" content="website">
  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml"><title>MnMaps</title>
- <link rel="stylesheet" href="assets/vendor/leaflet.css"><link rel="stylesheet" href="style.css?v=atlas-6">
- <script defer src="assets/vendor/leaflet.js"></script><script defer src="icons.js"></script><script defer src="hidden-areas.js?v=atlas-5"></script><script defer src="place-labels.js?v=atlas-6"></script><script defer src="app.js?v=atlas-6"></script>
+ <link rel="stylesheet" href="assets/vendor/leaflet.css"><link rel="stylesheet" href="style.css?v=atlas-7">
+ <script defer src="assets/vendor/leaflet.js"></script><script defer src="icons.js"></script><script defer src="hidden-areas.js?v=atlas-5"></script><script defer src="place-labels.js?v=atlas-7"></script><script defer src="app.js?v=atlas-7"></script>
 </head>
 <body>
  <header class="masthead">
@@ -36,6 +36,7 @@
    <div class="embed-toolbar"><select id="embed-map-select" class="map-select" aria-label="Choose map"></select><button id="embed-guide" aria-controls="journal" aria-expanded="false">☷ Field guide</button></div>
    <div class="frame-border" aria-hidden="true"></div>
    <div class="map-title"><span id="cartouche-kicker"></span><h2 id="map-name"></h2><small id="map-subtitle"></small></div>
+   <div id="level-controls" class="level-controls" role="group" aria-label="Map level" hidden></div>
    <div class="map-tools"><button id="zoom-in" title="Zoom in" aria-label="Zoom in">+</button><button id="zoom-out" title="Zoom out" aria-label="Zoom out">−</button><span></span><button id="fit" title="Fit entire map" aria-label="Fit entire map">⛶</button><button id="hide-pins" title="Toggle markers" aria-label="Show markers" aria-pressed="true">⚑</button><button id="share" title="Share this view" aria-label="Share this view">↗</button><button id="fullscreen" title="Enter fullscreen" aria-label="Enter fullscreen">⤢</button></div>
    <div class="compass" aria-label="North is up"><span>N</span><svg viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="36"/><circle cx="50" cy="50" r="30"/><path d="M50 2 58 42 98 50 58 58 50 98 42 58 2 50 42 42Z"/><path class="light" d="M50 2V50H98L58 58 50 98V50H2L42 42Z"/><circle cx="50" cy="50" r="5"/></svg></div>
    <div class="map-caption"><span id="zoom-label">ILLUSTRATED ATLAS</span><span>Drag to explore · Scroll to zoom</span></div>
