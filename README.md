@@ -19,14 +19,19 @@ notes belong to the level where they were placed. Try
 `?map=underdocks&level=lower`, `?map=underdocks&level=upper`, or
 `?map=underdocks&level=lower&place=wiki-west-bank`.
 
+Underdocks edition **v2** adds a parchment margin. Saved **v1** notes and alignment
+drafts use the earlier positions and do not apply to v2; their browser storage is
+retained, but they are not loaded on this edition. The supplied places already
+use the updated positions.
+
 With `?align=1`, select a marker or place name, then drag it or click its new position. Corrections stay in this browser and can be restored or exported.
 
 Credits and licences
 --------------------
 
-Underdocks: **Community wiki map of the Underdocks · author to confirm**.
-Locations are approximate. Source page, author and usage terms remain to be
-confirmed; this local preview is pending that review.
+Underdocks place names and locations are adapted from [Keirvan's bottom floor wiki map](https://monstersandmemories.miraheze.org/wiki/File:UnderdocksBottomFloorCity.png)
+under [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/).
+Locations are approximate; positions are adjusted to this map and abbreviations expanded.
 
 Place names and guild locations adapted from [Maggot's Night Harbor map](https://static.wikitide.net/monstersandmemorieswiki/5/5a/Night_harbor_V5.jpg) ([CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/)); positions adjusted to this map, 'Docs' corrected to 'Docks'. The adapted place-name and guild dataset in `data/labels.json` carries the same licence.
 

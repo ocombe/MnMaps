@@ -1,6 +1,6 @@
 {
   "map": "underdocks",
-  "tileRevision": "v1",
+  "tileRevision": "v2",
   "coordinateZoom": 5,
   "source": {
     "title": "Keirvan's Underdocks bottom floor wiki map",
@@ -14,8 +14,8 @@
     {
       "id": "wiki-apothecary",
       "name": "Apothecary",
-      "x": 2396,
-      "y": 4618,
+      "x": 2652,
+      "y": 4874,
       "level": "lower",
       "approximate": true,
       "note": "Approximate; to confirm in game. Western shore; exact shop entrance to confirm.",
@@ -27,8 +27,8 @@
     {
       "id": "wiki-rogue-cave",
       "name": "Rogue back cave",
-      "x": 2320,
-      "y": 4852,
+      "x": 2576,
+      "y": 5108,
       "level": "lower",
       "approximate": true,
       "note": "Approximate; to confirm in game. In a cave behind the western buildings; entrance approximate.",
@@ -40,8 +40,8 @@
     {
       "id": "wiki-stairs-up",
       "name": "Stairs up",
-      "x": 2448,
-      "y": 5008,
+      "x": 2704,
+      "y": 5264,
       "level": "lower",
       "approximate": true,
       "note": "Approximate; to confirm in game. Stairs on the western shore; destination to confirm in game.",
@@ -53,8 +53,8 @@
     {
       "id": "wiki-druid-shaman-cave",
       "name": "Druid / Shaman cave entrance",
-      "x": 2920,
-      "y": 5156,
+      "x": 3176,
+      "y": 5412,
       "level": "lower",
       "approximate": true,
       "note": "Approximate; to confirm in game. Cave entrance; interior positions to confirm in game.",
@@ -66,8 +66,8 @@
     {
       "id": "wiki-west-raft",
       "name": "Raft — western shore",
-      "x": 2964,
-      "y": 4366,
+      "x": 3220,
+      "y": 4622,
       "level": "lower",
       "approximate": true,
       "note": "Approximate; to confirm in game. Approximate crossing point; service and landing to confirm.",
@@ -79,8 +79,8 @@
     {
       "id": "wiki-east-raft",
       "name": "Raft — eastern shore",
-      "x": 3958,
-      "y": 3826,
+      "x": 4214,
+      "y": 4082,
       "level": "lower",
       "approximate": true,
       "note": "Approximate; to confirm in game. Approximate crossing point; service and landing to confirm.",
@@ -92,8 +92,8 @@
     {
       "id": "wiki-boat-de-city",
       "name": "Boat to Ail'Vorith",
-      "x": 3204,
-      "y": 3612,
+      "x": 3460,
+      "y": 3868,
       "level": "lower",
       "approximate": true,
       "note": "Approximate; to confirm in game.",
@@ -106,8 +106,8 @@
     {
       "id": "wiki-bath-house",
       "name": "Bath house",
-      "x": 3586,
-      "y": 4378,
+      "x": 3842,
+      "y": 4634,
       "level": "lower",
       "approximate": true,
       "note": "Approximate; to confirm in game. Basement.",
@@ -119,8 +119,8 @@
     {
       "id": "wiki-butchers",
       "name": "Butchers",
-      "x": 3417,
-      "y": 3864,
+      "x": 3673,
+      "y": 4120,
       "level": "lower",
       "approximate": true,
       "note": "Approximate; to confirm in game. Two adjacent shops indicated by the sketch; exact doors to confirm.",
@@ -132,8 +132,8 @@
     {
       "id": "wiki-bag-merchant",
       "name": "Bag merchant",
-      "x": 3678,
-      "y": 4112,
+      "x": 3934,
+      "y": 4368,
       "level": "lower",
       "approximate": true,
       "note": "Approximate; to confirm in game.",
@@ -145,8 +145,8 @@
     {
       "id": "wiki-marshall-harding",
       "name": "Marshal Harding",
-      "x": 4419,
-      "y": 3355,
+      "x": 4675,
+      "y": 3611,
       "level": "lower",
       "approximate": true,
       "note": "Approximate; to confirm in game. Approximate courtyard position.",
@@ -158,8 +158,8 @@
     {
       "id": "wiki-paymaster-elara-venn",
       "name": "Paymaster Elara Venn",
-      "x": 4334,
-      "y": 3614,
+      "x": 4590,
+      "y": 3870,
       "level": "lower",
       "approximate": true,
       "note": "Approximate; to confirm in game. 1st floor.",
@@ -171,8 +171,8 @@
     {
       "id": "wiki-quartermaster",
       "name": "Quartermaster",
-      "x": 4270,
-      "y": 3606,
+      "x": 4526,
+      "y": 3862,
       "level": "lower",
       "approximate": true,
       "note": "Approximate; to confirm in game. Buy / sell weapons and armour.",
@@ -184,8 +184,8 @@
     {
       "id": "wiki-northern-gates",
       "name": "Northern Gates",
-      "x": 2782,
-      "y": 3256,
+      "x": 3038,
+      "y": 3512,
       "level": "lower",
       "approximate": true,
       "note": "Approximate; to confirm in game. North-west bridge and gate approach; crossing point approximate.",
@@ -198,8 +198,8 @@
     {
       "id": "upper-to-night-harbor",
       "name": "to Night Harbor",
-      "x": 4073,
-      "y": 5177,
+      "x": 4329,
+      "y": 5433,
       "level": "upper",
       "kind": "exit",
       "tier": "exit",
@@ -218,8 +218,8 @@
         "Beastlord"
       ],
       "building": "Beastlord",
-      "x": 4165,
-      "y": 3070,
+      "x": 4421,
+      "y": 3326,
       "level": "lower"
     },
     {
@@ -235,8 +235,8 @@
         "Enchanter"
       ],
       "building": "Elementalist / Wizard / Enchanter trainers",
-      "x": 4152,
-      "y": 3382,
+      "x": 4408,
+      "y": 3638,
       "level": "lower"
     },
     {
@@ -252,8 +252,8 @@
         "Ranger"
       ],
       "building": "Archer / Warrior / Ranger trainers",
-      "x": 4271,
-      "y": 3503,
+      "x": 4527,
+      "y": 3759,
       "level": "lower"
     },
     {
@@ -269,8 +269,8 @@
         "Shadowknight"
       ],
       "building": "Necromancer / Cleric / Shadowknight trainers",
-      "x": 4371,
-      "y": 5653,
+      "x": 4627,
+      "y": 5909,
       "level": "lower"
     },
     {
@@ -282,8 +282,8 @@
         "Druid"
       ],
       "building": "Druid trainer",
-      "x": 3076,
-      "y": 5412,
+      "x": 3332,
+      "y": 5668,
       "level": "lower"
     },
     {
@@ -295,8 +295,8 @@
         "Shaman"
       ],
       "building": "Shaman trainer",
-      "x": 3508,
-      "y": 5710,
+      "x": 3764,
+      "y": 5966,
       "level": "lower"
     },
     {
@@ -308,8 +308,8 @@
         "Warrior"
       ],
       "building": "Warrior guildmaster",
-      "x": 4609,
-      "y": 3532,
+      "x": 4865,
+      "y": 3788,
       "level": "lower"
     },
     {
@@ -321,8 +321,8 @@
         "Rogue"
       ],
       "building": "Rogue trainer",
-      "x": 2293,
-      "y": 4818,
+      "x": 2549,
+      "y": 5074,
       "level": "lower"
     }
   ],

@@ -88,7 +88,7 @@ function drawMarkers(){
  if(!list.childElementCount)list.append(text('p','No places found. Try another name or enable more categories.','empty'));
  schedulePlaceLabels();
 }
-function setPanel(open){if(!compact())desktopPanelOpen=open;$('journal').classList.toggle('closed',!open);for(const id of ['toggle-panel','embed-guide'])$(id).setAttribute('aria-expanded',String(open));setTimeout(()=>map?.invalidateSize({pan:false}),0);}
+function setPanel(open){if(!compact())desktopPanelOpen=open;$('journal').classList.toggle('closed',!open);for(const id of ['toggle-panel','embed-guide'])$(id).setAttribute('aria-expanded',String(open));map?.invalidateSize({pan:true,animate:false});}
 function updateCategoryButtons(){for(const b of $('categories').children)b.setAttribute('aria-pressed',String(enabled.has(b.dataset.category)));$('hide-pins').setAttribute('aria-pressed',String(showPins));}
 function cancelPlacement(){placing=false;document.body.classList.remove('placing');$('cancel-place').hidden=true;}
 function openEditor(m){draft={...m};$('editor-title').textContent=personal.some(p=>p.id===m.id)?'Your discovery':'A new discovery';$('name').value=m.name;$('category').value=m.category;$('note').value=m.note;$('delete').hidden=!personal.some(p=>p.id===m.id);$('editor').showModal();$('name').focus();}
@@ -171,7 +171,7 @@ function applyLocation(url){
  }
  applyingView=false;if(warning)status(warning);scheduleUrl();
 }
-function fitMap(){activePlace=null;const d=config.defaultView;if(d.mode==='point')map.setView(locationOf(d),d.z,{animate:false});else map.fitBounds(mapBounds(),{padding:[d.padding,d.padding],animate:false});}
+function fitMap(){activePlace=null;map.invalidateSize({pan:false});const d=config.defaultView;if(d.mode==='point')map.setView(locationOf(d),d.z,{animate:false});else map.fitBounds(mapBounds(),{padding:[d.padding,d.padding],animate:false});}
 // A shared x/y link gets a small spot marker, but not when the view comes from this page itself (level switch, reload, back/forward).
 let ownView=['reload','back_forward'].includes(performance.getEntriesByType?.('navigation')[0]?.type);
 async function changeLevel(id,place=null,zoom=map.getZoom()){
@@ -275,7 +275,7 @@ function setupControls(){
  $('import').onclick=()=>$('import-file').click();$('import-file').onchange=async e=>{try{if(e.target.files[0])await importNotes(e.target.files[0]);}catch(e){status('Import failed: '+e.message,true);}finally{$('import-file').value='';}};
  $('share').onclick=()=>copyLink();$('close-link').onclick=()=>$('link-dialog').close();
  $('fullscreen').onclick=async()=>{try{if(document.fullscreenElement)await document.exitFullscreen();else await document.documentElement.requestFullscreen();}catch{status('Fullscreen is unavailable. Open the atlas in its own tab, or allow fullscreen on the iframe.');}};
- document.addEventListener('fullscreenchange',()=>{$('fullscreen').setAttribute('aria-label',document.fullscreenElement?'Exit fullscreen':'Enter fullscreen');$('fullscreen').title=document.fullscreenElement?'Exit fullscreen':'Enter fullscreen';map?.invalidateSize({pan:false});});
+ document.addEventListener('fullscreenchange',()=>{$('fullscreen').setAttribute('aria-label',document.fullscreenElement?'Exit fullscreen':'Enter fullscreen');$('fullscreen').title=document.fullscreenElement?'Exit fullscreen':'Enter fullscreen';map?.invalidateSize({pan:true,animate:false});});
  for(const s of document.querySelectorAll('.map-select')){for(const c of registry.maps){const option=text('option',c.title);option.value=c.id;s.append(option);}s.onchange=()=>loadMap(s.value,new URL(location.href),true);}
  window.addEventListener('popstate',()=>{const url=new URL(location.href);ownView=true;loadMap(url.searchParams.get('map')||registry.defaultMap,url);});
 }
