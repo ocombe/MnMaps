@@ -157,7 +157,7 @@
   },
   {
     "id": "wiki-alchemist",
-    "name": "Alchemist",
+    "name": "Alchemy — south-west quay",
     "x": 2514,
     "y": 4680,
     "level": "lower",
@@ -167,7 +167,7 @@
   },
   {
     "id": "wiki-herbalist",
-    "name": "Herbalist",
+    "name": "Herbalism — south-west quay",
     "x": 2566,
     "y": 4754,
     "level": "lower",
@@ -177,7 +177,7 @@
   },
   {
     "id": "wiki-west-bank",
-    "name": "West Bank",
+    "name": "Bank — south-west quay",
     "x": 2636,
     "y": 4706,
     "level": "lower",
@@ -187,7 +187,7 @@
   },
   {
     "id": "wiki-enchanting",
-    "name": "Tradeskill — enchanting / disenchanting",
+    "name": "(Dis)Enchanting — south-west quay",
     "x": 2690,
     "y": 4808,
     "level": "lower",
@@ -197,7 +197,7 @@
   },
   {
     "id": "wiki-shady",
-    "name": "Shady",
+    "name": "Shady merchant — harbour island",
     "x": 3485,
     "y": 4511,
     "level": "lower",
@@ -207,7 +207,7 @@
   },
   {
     "id": "wiki-medic",
-    "name": "Medic trainer",
+    "name": "First Aid — harbour island",
     "x": 3541,
     "y": 4457,
     "level": "lower",
@@ -217,7 +217,7 @@
   },
   {
     "id": "wiki-leatherworking",
-    "name": "Leatherworking",
+    "name": "Leatherworking — harbour island",
     "x": 3636,
     "y": 3990,
     "level": "lower",
@@ -227,7 +227,7 @@
   },
   {
     "id": "wiki-fletcher-bowyer",
-    "name": "Fletcher / Bowyer",
+    "name": "Fletching — north-east quay",
     "x": 4320,
     "y": 3480,
     "level": "lower",
@@ -267,7 +267,7 @@
   },
   {
     "id": "wiki-east-bank",
-    "name": "East Bank",
+    "name": "Bank — north-east quay",
     "x": 4581,
     "y": 4100,
     "level": "lower",

@@ -54604,5 +54604,20 @@
       "width": 5,
       "approximate": true
     }
+  ],
+  "levelStacks": [
+    {
+      "id": "rogue-cave-levels",
+      "level": "lower",
+      "upperAreas": [
+        "cave-western-shore-5-1"
+      ],
+      "lowerAreas": [
+        "interior-western-shore-1-1"
+      ],
+      "default": "upper",
+      "lowerLabel": "lower cave",
+      "upperLabel": "upper passage"
+    }
   ]
 }
