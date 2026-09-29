@@ -272,6 +272,32 @@
       "x": 4615,
       "y": 4305,
       "level": "lower"
+    },
+    {
+      "id": "class-druid",
+      "abbreviations": [
+        "DRU"
+      ],
+      "classes": [
+        "Druid"
+      ],
+      "building": "Druid trainer",
+      "x": 3076,
+      "y": 5412,
+      "level": "lower"
+    },
+    {
+      "id": "class-shaman",
+      "abbreviations": [
+        "SHM"
+      ],
+      "classes": [
+        "Shaman"
+      ],
+      "building": "Shaman trainer",
+      "x": 3508,
+      "y": 5710,
+      "level": "lower"
     }
   ],
   "version": 1

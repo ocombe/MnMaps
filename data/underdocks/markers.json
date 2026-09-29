@@ -293,5 +293,23 @@
     "y": 4629,
     "note": "",
     "level": "upper"
+  },
+  {
+    "id": "class-druid",
+    "name": "Druid trainer",
+    "x": 3076,
+    "y": 5412,
+    "level": "lower",
+    "note": "In the cave beneath the southern rock.",
+    "category": "Class trainer"
+  },
+  {
+    "id": "class-shaman",
+    "name": "Shaman trainer",
+    "x": 3508,
+    "y": 5710,
+    "level": "lower",
+    "note": "In the cave beneath the southern rock.",
+    "category": "Class trainer"
   }
 ]
