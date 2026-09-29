@@ -194,6 +194,18 @@
       "priority": 75,
       "minZoom": 3.75,
       "arrow": "northwest"
+    },
+    {
+      "id": "upper-to-night-harbor",
+      "name": "to Night Harbor",
+      "x": 4073,
+      "y": 5177,
+      "level": "upper",
+      "kind": "exit",
+      "tier": "exit",
+      "priority": 75,
+      "minZoom": 3.75,
+      "arrow": "east"
     }
   ],
   "trainers": [

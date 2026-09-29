@@ -284,5 +284,14 @@
     "approximate": true,
     "note": "Approximate; to confirm in game. Southern end of the eastern shore; exact building to confirm.",
     "category": "Class trainer"
+  },
+  {
+    "id": "upper-stable",
+    "name": "Stable — upper city",
+    "category": "Stable",
+    "x": 3673,
+    "y": 4629,
+    "note": "",
+    "level": "upper"
   }
 ]
