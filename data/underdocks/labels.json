@@ -145,8 +145,8 @@
     {
       "id": "wiki-marshall-harding",
       "name": "Marshal Harding",
-      "x": 4570,
-      "y": 3562,
+      "x": 4419,
+      "y": 3355,
       "level": "lower",
       "approximate": true,
       "note": "Approximate; to confirm in game. Approximate courtyard position.",
@@ -269,8 +269,8 @@
         "Shadowknight"
       ],
       "building": "Necromancer / Cleric / Shadowknight trainers",
-      "x": 4615,
-      "y": 4305,
+      "x": 4371,
+      "y": 5653,
       "level": "lower"
     },
     {
@@ -297,6 +297,19 @@
       "building": "Shaman trainer",
       "x": 3508,
       "y": 5710,
+      "level": "lower"
+    },
+    {
+      "id": "class-fighter-guildmaster",
+      "abbreviations": [
+        "FTR GM"
+      ],
+      "classes": [
+        "Fighter"
+      ],
+      "building": "Fighter guildmaster",
+      "x": 4609,
+      "y": 3532,
       "level": "lower"
     }
   ],

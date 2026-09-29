@@ -158,8 +158,8 @@
   {
     "id": "wiki-alchemist",
     "name": "Alchemy — south-west quay",
-    "x": 2514,
-    "y": 4680,
+    "x": 2417,
+    "y": 4599,
     "level": "lower",
     "approximate": true,
     "note": "Approximate; to confirm in game. Alchemy.",
@@ -168,8 +168,8 @@
   {
     "id": "wiki-herbalist",
     "name": "Herbalism — south-west quay",
-    "x": 2566,
-    "y": 4754,
+    "x": 2397,
+    "y": 4608,
     "level": "lower",
     "approximate": true,
     "note": "Approximate; to confirm in game. Herbalism.",
@@ -178,8 +178,8 @@
   {
     "id": "wiki-west-bank",
     "name": "Bank — south-west quay",
-    "x": 2636,
-    "y": 4706,
+    "x": 2651,
+    "y": 4727,
     "level": "lower",
     "approximate": true,
     "note": "Approximate; to confirm in game.",
@@ -188,8 +188,8 @@
   {
     "id": "wiki-enchanting",
     "name": "(Dis)Enchanting — south-west quay",
-    "x": 2690,
-    "y": 4808,
+    "x": 2697,
+    "y": 4800,
     "level": "lower",
     "approximate": true,
     "note": "Approximate; to confirm in game. Enchanting and disenchanting.",
@@ -268,8 +268,8 @@
   {
     "id": "wiki-east-bank",
     "name": "Bank — north-east quay",
-    "x": 4581,
-    "y": 4100,
+    "x": 4605,
+    "y": 4169,
     "level": "lower",
     "approximate": true,
     "note": "Approximate; to confirm in game. Southern end of the eastern shore; exact building to confirm.",
@@ -278,8 +278,8 @@
   {
     "id": "class-necromancer-cleric-shadowknight",
     "name": "Necromancer / Cleric / Shadowknight trainers",
-    "x": 4615,
-    "y": 4305,
+    "x": 4371,
+    "y": 5653,
     "level": "lower",
     "approximate": true,
     "note": "Approximate; to confirm in game. Southern end of the eastern shore; exact building to confirm.",
@@ -310,6 +310,15 @@
     "y": 5710,
     "level": "lower",
     "note": "In the cave beneath the southern rock.",
+    "category": "Class trainer"
+  },
+  {
+    "id": "class-fighter-guildmaster",
+    "name": "Fighter guildmaster",
+    "x": 4609,
+    "y": 3532,
+    "level": "lower",
+    "note": "",
     "category": "Class trainer"
   }
 ]
