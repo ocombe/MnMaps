@@ -163,7 +163,7 @@ function applyLocation(url){
  const q=url.searchParams,wanted=q.get('place');let warning='';
  const values=['x','y','z'].map(k=>q.has(k)&&q.get(k).trim()!==''?Number(q.get(k)):NaN);
  if(wanted){const p=findPlace(wanted);if(p){if(p.kind==='marker'){enabled.add(p.category);showPins=true;$('search').value='';updateCategoryButtons();drawMarkers();}const z=Number.isFinite(values[2])&&values[2]>=config.minZoom&&values[2]<=config.maxZoom?values[2]:config.defaultView.placeZoom;openPlace(p,z);applyingView=false;return;}warning='That place was not found on this map.';}
- if(bounded(...values)){map.setView(locationOf({x:values[0],y:values[1]}),values[2],{animate:false});sharedPin=L.circleMarker(locationOf({x:values[0],y:values[1]}),{radius:6,color:'rgb(113,61,25)',weight:2,fillColor:'#fff1cb',fillOpacity:.8,interactive:false}).addTo(map);}
+ if(bounded(...values)){map.setView(locationOf({x:values[0],y:values[1]}),values[2],{animate:false});if(!ownView)sharedPin=L.circleMarker(locationOf({x:values[0],y:values[1]}),{radius:6,color:'rgb(113,61,25)',weight:2,fillColor:'#fff1cb',fillOpacity:.8,interactive:false}).addTo(map);}
  else{
   const legacy=('#'+(url.href.split('#')[1]||'')).match(/^#view=([\d.]+),(-?[\d.]+),(-?[\d.]+)$/),p=legacy?.slice(1).map(Number);
   if(p&&bounded(p[1],p[2],p[0]))map.setView(locationOf({x:p[1],y:p[2]}),p[0],{animate:false});
@@ -172,11 +172,13 @@ function applyLocation(url){
  applyingView=false;if(warning)status(warning);scheduleUrl();
 }
 function fitMap(){activePlace=null;const d=config.defaultView;if(d.mode==='point')map.setView(locationOf(d),d.z,{animate:false});else map.fitBounds(mapBounds(),{padding:[d.padding,d.padding],animate:false});}
+// A shared x/y link gets a small spot marker, but not when the view comes from this page itself (level switch, reload, back/forward).
+let ownView=['reload','back_forward'].includes(performance.getEntriesByType?.('navigation')[0]?.type);
 async function changeLevel(id,place=null,zoom=map.getZoom()){
  if(!config.levels?.some(l=>l.id===id)||id===config.levelId)return;
  const url=viewUrl(null),center=place?[place.x,place.y]:pixelsOf(map.getCenter());url.searchParams.set('level',id);url.searchParams.set('x',String(center[0]));url.searchParams.set('y',String(center[1]));url.searchParams.set('z',String(zoom));
  if(place)url.searchParams.set('place',place.id);else url.searchParams.delete('place');
- history.pushState({map:config.id,level:id},'',url);await loadMap(config.id,url);
+ history.pushState({map:config.id,level:id},'',url);ownView=true;await loadMap(config.id,url);
 }
 function mapBounds(){return L.latLngBounds(map.unproject([0,config.height],config.coordinateZoom),map.unproject([config.width,0],config.coordinateZoom));}
 function updateTitles(){
@@ -222,7 +224,7 @@ async function loadMap(id,url=new URL(location.href),push=false){
   const currentHidden={...hiddenData};for(const key of ['areas','additionalAreas','routes','connections','destinations','levelStacks'])if(Array.isArray(hiddenData[key]))currentHidden[key]=hiddenData[key].filter(atLevel);
   fitMap();disposeLabels=setupPlaceLabels(labelData);hiddenController=setupHiddenAreas(map,config,currentHidden);
   buildPlaceIndex();refreshSearch();setPanel(!compact()&&desktopPanelOpen);$('hidden-controls').hidden=!config.hiddenAreasFile||!(currentHidden.areas.length||(currentHidden.additionalAreas||[]).length);$('alignment-tools').hidden=!alignmentMode;$('add').hidden=alignmentMode;updateAlignmentStatus();
-  map.on('movestart',()=>{if(!applyingView){activePlace=null;}});
+  map.on('movestart',()=>{if(!applyingView){activePlace=null;sharedPin?.remove();sharedPin=null;}});
   map.on('moveend zoomend',()=>{updateZoom();scheduleUrl();});
   map.on('popupclose',()=>{if(!applyingView){activePlace=null;scheduleUrl();}});
   map.on('click',e=>{
@@ -231,7 +233,7 @@ async function loadMap(id,url=new URL(location.href),push=false){
    cancelPlacement();openEditor({id:'personal-'+crypto.randomUUID(),name:'',note:'',category:'Personal',x,y,...(config.levels?{level:config.levelId}:{})});
   });
   if(push){url.searchParams.set('map',config.id);for(const k of ['place','x','y','z','level'])url.searchParams.delete(k);url.href=url.href.split('#')[0];history.pushState({map:config.id},'',url);}
-  applyLocation(url);updateZoom();loading=false;document.body.dataset.ready='true';syncUrl();
+  applyLocation(url);ownView=false;updateZoom();loading=false;document.body.dataset.ready='true';syncUrl();
   if(!requested&&id)status('Unknown map; showing '+config.title+'.');
  }catch(e){if(serial!==loadSerial)return;loading=false;document.body.dataset.ready=map?'true':'false';status('The atlas could not load. '+e.message,true);if(map)syncUrl();}
  finally{if(serial===loadSerial)for(const s of document.querySelectorAll('.map-select')){s.disabled=false;if(config)s.value=config.id;}}
@@ -270,7 +272,7 @@ function setupControls(){
  $('fullscreen').onclick=async()=>{try{if(document.fullscreenElement)await document.exitFullscreen();else await document.documentElement.requestFullscreen();}catch{status('Fullscreen is unavailable. Open the atlas in its own tab, or allow fullscreen on the iframe.');}};
  document.addEventListener('fullscreenchange',()=>{$('fullscreen').setAttribute('aria-label',document.fullscreenElement?'Exit fullscreen':'Enter fullscreen');$('fullscreen').title=document.fullscreenElement?'Exit fullscreen':'Enter fullscreen';map?.invalidateSize({pan:false});});
  for(const s of document.querySelectorAll('.map-select')){for(const c of registry.maps){const option=text('option',c.title);option.value=c.id;s.append(option);}s.onchange=()=>loadMap(s.value,new URL(location.href),true);}
- window.addEventListener('popstate',()=>{const url=new URL(location.href);loadMap(url.searchParams.get('map')||registry.defaultMap,url);});
+ window.addEventListener('popstate',()=>{const url=new URL(location.href);ownView=true;loadMap(url.searchParams.get('map')||registry.defaultMap,url);});
 }
 async function init(){try{registry=validateRegistry(await fetchData('data/maps.json'));setupControls();await loadMap(new URLSearchParams(location.search).get('map')||registry.defaultMap);}catch(e){status('The atlas could not load. '+e.message,true);}}
 init();
