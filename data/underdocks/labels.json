@@ -206,8 +206,8 @@
         "Beastlord"
       ],
       "building": "Beastlord",
-      "x": 4468,
-      "y": 3268,
+      "x": 4165,
+      "y": 3070,
       "level": "lower"
     },
     {
@@ -240,8 +240,8 @@
         "Ranger"
       ],
       "building": "Archer / Fighter / Ranger trainers",
-      "x": 4312,
-      "y": 3584,
+      "x": 4271,
+      "y": 3503,
       "level": "lower"
     },
     {
@@ -257,8 +257,8 @@
         "Shadowknight"
       ],
       "building": "Necromancer / Cleric / Shadowknight trainers",
-      "x": 4590,
-      "y": 4250,
+      "x": 4615,
+      "y": 4305,
       "level": "lower"
     }
   ],
