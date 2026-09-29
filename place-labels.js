@@ -37,7 +37,7 @@ function setupPlaceLabels(data){
   for(const pin of pins.values())if(pin.options.icon?.options.className==='trainer-pin'){
    if(showPins&&trainersVisible){if(!map.hasLayer(pin))pin.addTo(map);}else pin.remove();
   }
-  const occupied=[...document.querySelectorAll('#map .pin, #map .hidden-route, #map .leaflet-tooltip, .map-title, .level-controls, .embed-toolbar, .map-tools, .compass, .leaflet-popup')]
+  const occupied=[...document.querySelectorAll('#map .pin, #map .hidden-route, .map-title, .level-controls, .embed-toolbar, .map-tools, .compass, .leaflet-popup')]
    .filter(el=>el.getClientRects().length&&el.style.opacity!=='0').map(el=>el.getBoundingClientRect());
   const badgeRects=[];
   const chromeRects=[...document.querySelectorAll('.map-title,.level-controls,.embed-toolbar,.map-tools,.compass,.leaflet-popup')].filter(e=>e.getClientRects().length&&e.style.opacity!=='0').map(e=>e.getBoundingClientRect());
@@ -81,9 +81,11 @@ function setupPlaceLabels(data){
  }
  schedulePlaceLabels=()=>{if(frame)cancelAnimationFrame(frame);frame=requestAnimationFrame(layout);};
  toggle.onchange=()=>{try{localStorage.setItem(key,String(toggle.checked));}catch{status('Place-name preference could not be saved.');}schedulePlaceLabels();};
- map.on('zoomend moveend resize layeradd layerremove',schedulePlaceLabels);
+ // Hover tooltips are transient; re-laying labels around them moves a label out from under the pointer.
+ const onLayer=e=>{if(!(e.layer instanceof L.Tooltip))schedulePlaceLabels();};
+ map.on('zoomend moveend resize',schedulePlaceLabels);map.on('layeradd layerremove',onLayer);
  schedulePlaceLabels();
  document.fonts.ready.then(schedulePlaceLabels);
  const currentMap=map,handler=schedulePlaceLabels;
- return ()=>{cancelAnimationFrame(frame);currentMap.off('zoomend moveend resize layeradd layerremove',handler);schedulePlaceLabels=()=>{};};
+ return ()=>{cancelAnimationFrame(frame);currentMap.off('zoomend moveend resize',handler);currentMap.off('layeradd layerremove',onLayer);schedulePlaceLabels=()=>{};};
 }
