@@ -302,21 +302,5 @@
     "x": 4780,
     "y": 3990,
     "note": "Approximate position; to confirm in game. At the bridge."
-  },
-  {
-    "id": "to-ail-vorith-main-city",
-    "name": "To Ail'Vorith Main City",
-    "category": "Exit",
-    "x": 4390,
-    "y": 3660,
-    "note": "Approximate position; to confirm in game. Cross the long bridge toward the main city."
-  },
-  {
-    "id": "route-to-the-docks",
-    "name": "Route to the docks",
-    "category": "Exit",
-    "x": 5140,
-    "y": 3865,
-    "note": "Approximate position; to confirm in game. Follow the shore and keep left into a cave to reach the docks. Exact cave entrance to confirm."
   }
 ]
