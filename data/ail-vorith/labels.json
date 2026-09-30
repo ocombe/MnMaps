@@ -58,32 +58,6 @@
       "priority": 50,
       "minZoom": 4.5,
       "note": "Approximate location; to confirm in game."
-    },
-    {
-      "id": "exit-to-ail-vorith-main-city",
-      "name": "to the Main City",
-      "kind": "exit",
-      "priority": 60,
-      "minZoom": 3.25,
-      "x": 4390,
-      "y": 3660,
-      "arrow": "north",
-      "tier": "exit",
-      "approximate": true,
-      "note": "Approximate position; to confirm in game. Cross the long bridge toward the main city."
-    },
-    {
-      "id": "exit-route-to-the-docks",
-      "name": "to the docks",
-      "kind": "exit",
-      "priority": 60,
-      "minZoom": 3.25,
-      "x": 5140,
-      "y": 3865,
-      "arrow": "south",
-      "tier": "exit",
-      "approximate": true,
-      "note": "Approximate position; to confirm in game. Follow the shore and keep left into a cave to reach the docks. Exact cave entrance to confirm."
     }
   ],
   "trainers": [
