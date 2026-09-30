@@ -102,6 +102,64 @@
       },
       "hiddenPrimaryStack": null,
       "legacyStorage": {}
+    },
+    {
+      "id": "ail-vorith",
+      "title": "Ail'Vorith",
+      "subtitle": "A traveller’s chart",
+      "cartoucheKicker": "The cavern city",
+      "breadcrumb": "Monsters & Memories / Ail'Vorith",
+      "description": "Explore Ail'Vorith, the Foreign Quarter and the cavern lake in this illustrated fan atlas.",
+      "width": 7424,
+      "height": 8192,
+      "minZoom": 0,
+      "maxNativeZoom": 5,
+      "maxZoom": 7,
+      "coordinateZoom": 5,
+      "tileSize": 256,
+      "tileRevision": "v1",
+      "tilePath": "assets/tiles/ail-vorith/{z}/{x}/{y}.webp",
+      "markersFile": "data/ail-vorith/markers.json",
+      "labelsFile": "data/ail-vorith/labels.json",
+      "hiddenAreasFile": "data/ail-vorith/hidden-areas.json",
+      "defaultView": {
+        "mode": "fit",
+        "padding": 18,
+        "placeZoom": 5
+      },
+      "extraCategories": {
+        "Vendor": [
+          "◈",
+          "#916c30"
+        ],
+        "Guild": [
+          "⚑",
+          "#4e4668"
+        ],
+        "Teleporter": [
+          "✦",
+          "#385f60"
+        ],
+        "Exit": [
+          "↗",
+          "#64795b"
+        ],
+        "Forge": [
+          "⚒",
+          "#665e3e"
+        ]
+      },
+      "attribution": {
+        "map": "Illustrated fan atlas · Not an official game map",
+        "text": "Foreign Quarter layout after the community map by Neeferio, CC BY-SA 4.0",
+        "sourceTitle": "Neeferio's Foreign Quarter map",
+        "sourceUrl": "https://monstersandmemories.miraheze.org/wiki/File:Ailvorith_foreignquarters2.jpg",
+        "license": "CC BY-SA 4.0",
+        "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+        "changes": "Names and locations adapted from the Foreign Quarter community map; positions adjusted to this illustration and class abbreviations expanded."
+      },
+      "hiddenPrimaryStack": null,
+      "legacyStorage": {}
     }
   ]
 }
