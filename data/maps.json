@@ -66,7 +66,7 @@
       "tilePath": "assets/tiles/underdocks/lower/{z}/{x}/{y}.webp",
       "markersFile": "data/underdocks/markers.json",
       "labelsFile": "data/underdocks/labels.json",
-      "hiddenAreasFile": "data/underdocks/hidden-areas.json",
+      "hiddenAreasFile": null,
       "defaultView": {
         "mode": "fit",
         "padding": 18,
