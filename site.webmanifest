@@ -1,0 +1,13 @@
+{
+ "name": "MnMaps",
+ "short_name": "MnMaps",
+ "description": "An illustrated community atlas of Monsters & Memories.",
+ "start_url": "./",
+ "display": "standalone",
+ "background_color": "#16120e",
+ "theme_color": "#16120e",
+ "icons": [
+  {"src": "assets/icons/icon-192.png", "sizes": "192x192", "type": "image/png"},
+  {"src": "assets/icons/icon-512.png", "sizes": "512x512", "type": "image/png"}
+ ]
+}
