@@ -29,11 +29,20 @@ With `?align=1`, select a marker or place name, then drag it or click its new po
 Credits and licences
 --------------------
 
-Faelindral opens on Platforms; Ground is available from the level buttons. Hover
+Faelindral opens on Platforms; Ground and Overview are available from the level buttons. Hover
 a deck to trace its outline, or click an overlap to choose a platform beneath it.
 The visible rim is solid and the rest is dashed. The artwork stays unchanged.
 Ground shows dotted platform footprints. Landing arrows switch views at their
 destination; Temple Lift has only its lower landing marked for now.
+
+Overview follows the layout of Maggot's community map, with place names and no
+published markers or landing arrows. It uses a separate chart: switching to or
+from Overview fits the whole chart; Ground and Platforms keep the same position.
+The Overview artwork is adapted from
+[Maggot's Faelindral map](https://monstersandmemories.miraheze.org/wiki/File:Faelindral_V2.jpg)
+and licensed [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/).
+Its forest background and ground bridge are omitted, and the raised deck restored.
+The licences for the other artwork and site remain unchanged.
 
 Faelindral place names, guilds, amenities and tradeskill locations are adapted
 from [Maggot's Faelindral wiki map](https://monstersandmemories.miraheze.org/wiki/File:Faelindral_V2.jpg)

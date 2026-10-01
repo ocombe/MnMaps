@@ -178,7 +178,9 @@ function fitMap(){activePlace=null;map.invalidateSize({pan:false});const d=confi
 let ownView=['reload','back_forward'].includes(performance.getEntriesByType?.('navigation')[0]?.type);
 async function changeLevel(id,place=null,zoom=map.getZoom()){
  if(!config.levels?.some(l=>l.id===id)||id===config.levelId)return;
+ const base=registry.maps.find(c=>c.id===config.id),target=levelConfig(base,base.levels.find(l=>l.id===id));
  const url=viewUrl(null),center=place?[place.x,place.y]:pixelsOf(map.getCenter());url.searchParams.set('level',id);url.searchParams.set('x',String(center[0]));url.searchParams.set('y',String(center[1]));url.searchParams.set('z',String(zoom));
+ if(!levelsAligned(target,config))for(const k of ['x','y','z'])url.searchParams.delete(k);
  if(place)url.searchParams.set('place',place.id);else url.searchParams.delete('place');
  history.pushState({map:config.id,level:id},'',url);ownView=true;await loadMap(config.id,url);
 }
@@ -201,13 +203,19 @@ function updateTitles(){
  $('about-attribution').textContent=a.changes||a.text;
  const credits=$('about-map-links');credits.replaceChildren();
  appendAttributionLinks(credits,a);
+ let artwork=$('about-artwork-credits');if(!artwork){artwork=text('p','');artwork.id='about-artwork-credits';credits.after(artwork);}
+ artwork.replaceChildren();artwork.hidden=!config.artworkCredits?.length;
+ for(const credit of config.artworkCredits||[]){artwork.append(text('span',credit.text+' '));appendAttributionLinks(artwork,credit);}
 }
 const localPath=p=>typeof p==='string'&&/^[a-zA-Z0-9_./{}-]+$/.test(p)&&!p.startsWith('/')&&!p.split('/').includes('..');
+const levelConfig=(base,level)=>level?{...base,...level,id:base.id,title:base.title,levelId:level.id,levelTitle:level.title}:base;
+const levelsAligned=(a,b)=>a.width===b.width&&a.height===b.height&&a.coordinateZoom===b.coordinateZoom&&(a.alignmentGroup||'shared')===(b.alignmentGroup||'shared');
 async function fetchData(path,empty){if(path===null)return empty;if(!localPath(path))throw Error('Invalid local data path');const r=await fetch(path,{cache:'no-store'});if(!r.ok)throw Error('Map data unavailable: '+path);return r.json();}
 function validateRegistry(data){
  if(data.version!==1||!Array.isArray(data.maps)||!data.maps.length||!data.maps.some(m=>m.id===data.defaultMap)||new Set(data.maps.map(m=>m.id)).size!==data.maps.length)throw Error('Invalid map registry');
  for(const c of data.maps){if(!/^[a-z0-9-]+$/.test(c.id)||!c.title||!c.description||![c.width,c.height,c.coordinateZoom,c.minZoom,c.maxZoom,c.maxNativeZoom,c.tileSize].every(Number.isFinite)||c.width<=0||c.height<=0||c.maxZoom<c.minZoom||!localPath(c.tilePath)||!localPath(c.markersFile)||!c.defaultView)throw Error('Invalid map configuration');}
  for(const c of data.maps)if(c.levels){if(!Array.isArray(c.levels)||!c.levels.length||new Set(c.levels.map(l=>l.id)).size!==c.levels.length||!c.levels.some(l=>l.id===c.defaultLevel)||!c.levels.every(l=>/^[a-z0-9-]+$/.test(l.id)&&l.title&&localPath(l.tilePath)))throw Error('Invalid map levels');}
+ for(const base of data.maps)for(const level of base.levels||[]){const c=levelConfig(base,level);if(![c.width,c.height,c.coordinateZoom,c.minZoom,c.maxZoom,c.maxNativeZoom,c.tileSize].every(Number.isFinite)||c.width<=0||c.height<=0||c.minZoom>c.maxNativeZoom||c.maxNativeZoom>c.maxZoom||!['markersFile','labelsFile','hiddenAreasFile','platformFootprintsFile'].every(k=>c[k]==null||localPath(c[k])))throw Error('Invalid level configuration');}
  return data;
 }
 async function loadMap(id,url=new URL(location.href),push=false){
@@ -216,11 +224,18 @@ async function loadMap(id,url=new URL(location.href),push=false){
  if(push)url.searchParams.delete('level');
  for(const s of document.querySelectorAll('.map-select'))s.disabled=true;
  try{
-  const [markers,labels,hidden,platforms]=await Promise.all([fetchData(next.markersFile,[]),fetchData(next.labelsFile,{labels:[],trainers:[]}),fetchData(next.hiddenAreasFile,{areas:[],routes:[]}),fetchData(next.platformFootprintsFile||null,{platforms:[]})]);
+  let [markers,labels,hidden,platforms]=await Promise.all([fetchData(next.markersFile,[]),fetchData(next.labelsFile,{labels:[],trainers:[]}),fetchData(next.hiddenAreasFile,{areas:[],routes:[]}),fetchData(next.platformFootprintsFile||null,{platforms:[]})]);
   if(serial!==loadSerial)return;
   if(!Array.isArray(markers)||!Array.isArray(labels.labels)||!Array.isArray(labels.trainers)||!Array.isArray(hidden.areas))throw Error('Invalid map feature data');
   const wanted=url.searchParams.get('place'),dest=[...markers,...labels.labels,...hidden.areas,...(hidden.additionalAreas||[]),...(hidden.destinations||[])].find(p=>wanted&&(p.id===wanted||p.slug===wanted||slug(p.name)===wanted));
-  if(base.levels){const level=base.levels.find(l=>l.id===(!push&&dest?.level?dest.level:url.searchParams.get('level')))||base.levels.find(l=>l.id===base.defaultLevel);next={...base,tilePath:level.tilePath,levelId:level.id,levelTitle:level.title};}
+  if(base.levels){const level=base.levels.find(l=>l.id===(!push&&dest?.level?dest.level:url.searchParams.get('level')))||base.levels.find(l=>l.id===base.defaultLevel);next=levelConfig(base,level);}
+  [markers,labels,hidden,platforms]=await Promise.all([
+   next.markersFile===base.markersFile?markers:fetchData(next.markersFile,[]),
+   next.labelsFile===base.labelsFile?labels:fetchData(next.labelsFile,{labels:[],trainers:[]}),
+   next.hiddenAreasFile===base.hiddenAreasFile?hidden:fetchData(next.hiddenAreasFile,{areas:[],routes:[]}),
+   next.platformFootprintsFile===base.platformFootprintsFile?platforms:fetchData(next.platformFootprintsFile||null,{platforms:[]})]);
+  if(serial!==loadSerial)return;
+  if(!Array.isArray(markers)||!Array.isArray(labels.labels)||!Array.isArray(labels.trainers)||!Array.isArray(hidden.areas))throw Error('Invalid map feature data');
   disposeLabels();hiddenController?.dispose();platformController?.dispose();map?.remove();pins.clear();map=null;
   config=next;categories={...baseCategories,...(config.extraCategories||{})};setupCategoryControls();originals=markers;labelData=labels;hiddenData=hidden;publishedPositions=new Map(originals.map(m=>[m.id,[m.x,m.y]]));publishedLabelPositions=new Map(labels.labels.map(r=>[r.id,[r.x,r.y]]));
   activePlace=null;sharedPin=null;cancelPlacement();if($('editor').open)closeEditor();$('search').value='';enabled=new Set(Object.keys(categories));showPins=true;updateCategoryButtons();

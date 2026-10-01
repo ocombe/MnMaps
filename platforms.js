@@ -15,7 +15,7 @@ function setupPlatforms(map,config,data){
  function show(id,keep=false){
   ink.clearLayers();selected=rows.find(r=>r.id===id)||null;select.value=selected?.id||'';locked=keep&&!!selected;
   if(!selected)return;
-  const base={pane:'platformInk',interactive:false,fill:false,color:'#3f2818',opacity:1,weight:2.3,className:'platform-outline'};
+  const base={pane:'platformInk',interactive:false,fill:false,color:'#39c7ef',opacity:1,weight:3.5,className:'platform-outline'};
   // The complete rim is dashed; its visible sections receive a solid line.
   ink.addLayer(shape(selected.fullPolygons,{...base,dashArray:'6 5',className:'platform-outline platform-under'}));
   if(selected.visiblePolygons.length)ink.addLayer(shape(selected.visiblePolygons,{...base,className:'platform-outline platform-visible'}));

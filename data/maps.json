@@ -197,6 +197,36 @@
           "id": "ground",
           "title": "Ground",
           "tilePath": "assets/tiles/faelindral/ground/{z}/{x}/{y}.webp"
+        },
+        {
+          "id": "overview",
+          "title": "Overview",
+          "alignmentGroup": "overview",
+          "width": 2920,
+          "height": 2860,
+          "coordinateZoom": 4,
+          "maxNativeZoom": 4,
+          "maxZoom": 6,
+          "tileRevision": "overview-v1",
+          "tilePath": "assets/tiles/faelindral/overview/{z}/{x}/{y}.webp",
+          "labelsFile": "data/faelindral/overview-labels.json",
+          "markersFile": null,
+          "hiddenAreasFile": null,
+          "platformFootprintsFile": null,
+          "attribution": {
+            "map": "Illustrated fan atlas · Not an official game map",
+            "text": "Overview adapted from Maggot's Faelindral map (CC BY-SA 4.0)",
+            "sourceTitle": "Maggot's Faelindral wiki map",
+            "sourceUrl": "https://monstersandmemories.miraheze.org/wiki/File:Faelindral_V2.jpg",
+            "license": "CC BY-SA 4.0",
+            "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+            "changes": "Overview artwork adapted from Maggot's Faelindral map: forest background omitted, raised deck restored, and ground bridge omitted. This Overview artwork is licensed CC BY-SA 4.0. The licences for the other artwork and site remain unchanged."
+          },
+          "defaultView": {
+            "mode": "fit",
+            "padding": 18,
+            "placeZoom": 4
+          }
         }
       ],
       "extraCategories": {
@@ -227,7 +257,18 @@
         "changes": "Place names, guilds, amenities and tradeskill locations adapted from Maggot's Faelindral wiki map (CC BY-SA 4.0). Positions adjusted to this atlas and approximate. ARC/FTR updated to ARC/WAR."
       },
       "hiddenPrimaryStack": null,
-      "legacyStorage": {}
+      "legacyStorage": {},
+      "artworkCredits": [
+        {
+          "map": "Illustrated fan atlas · Not an official game map",
+          "text": "Overview artwork: adapted from Maggot's Faelindral map, licensed CC BY-SA 4.0. Other artwork and site licences remain unchanged.",
+          "sourceTitle": "Maggot's Faelindral wiki map",
+          "sourceUrl": "https://monstersandmemories.miraheze.org/wiki/File:Faelindral_V2.jpg",
+          "license": "CC BY-SA 4.0",
+          "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+          "changes": "Overview artwork adapted from Maggot's Faelindral map: forest background omitted, raised deck restored, and ground bridge omitted. This Overview artwork is licensed CC BY-SA 4.0. The licences for the other artwork and site remain unchanged."
+        }
+      ]
     }
   ]
 }
