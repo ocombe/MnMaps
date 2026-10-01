@@ -216,7 +216,9 @@
         },
         {
           "id": "platforms",
-          "title": "Platforms",
+          "title": "Platforms (simplified)",
+          "levelSubtitle": "Simplified view",
+          "viewNote": "Simplified view: platform layout, distances and heights are approximate.",
           "tilePath": "assets/tiles/faelindral/platforms/{z}/{x}/{y}.webp"
         }
       ],

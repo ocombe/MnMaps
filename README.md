@@ -30,6 +30,9 @@ Credits and licences
 --------------------
 
 Faelindral opens on Platforms, with Ground available from the level buttons.
+Simplified view: platform layout, distances and heights are approximate.
+The Platforms button, map subtitle, parchment note, field guide and About
+identify this simplified view. Ground retains its existing presentation.
 The two charts use different layouts: switching views fits the destination;
 landing arrows open the matching landing. Platforms includes community place
 names, guild badges, amenities, tradeskills, notable NPCs and district vendor

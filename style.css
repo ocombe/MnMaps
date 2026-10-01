@@ -94,6 +94,10 @@ dialog{color:var(--foreground);background:var(--popover);border:1px solid var(--
 .level-controls{position:absolute;top:137px;left:22px;z-index:550;display:flex;gap:4px;padding:4px;background:var(--card);border:1px solid var(--amber-border);border-radius:10px;box-shadow:var(--shadow);max-width:calc(100% - 78px)}
 .level-controls button{min-height:44px;padding:8px 12px;font-size:12px;white-space:nowrap}
 .level-controls button[aria-pressed="true"]{background:#5a3b22;border-color:var(--primary);color:#fff0cc}
+#map-view-note{position:absolute;left:20px;bottom:52px;z-index:450;max-width:min(360px,calc(100% - 118px));margin:0;padding:8px 10px;border:1px solid #8b6b3f99;border-radius:6px;background:linear-gradient(115deg,#e6ce9df2,#f2e1baf2);color:#382d20;box-shadow:0 2px 8px #30251426;font:12px/1.45 var(--body);pointer-events:none}
+#guide-view-note{flex-shrink:0;margin:0 0 14px;color:var(--muted-foreground);font-size:12px;line-height:1.5}
+.has-view-note.embed .map-title small{display:block}
+@media(max-width:760px){#map-view-note{left:14px;bottom:45px;max-width:calc(100% - 94px)}}
 .embed .level-controls{top:136px;left:13px}
 @media(max-width:760px){.level-controls,.embed .level-controls{top:154px;left:14px}.level-controls button{padding:8px;font-size:11px}}
 /* Optional platform outlines share the atlas's ink and paper colours. */

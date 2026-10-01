@@ -191,7 +191,12 @@ function appendAttributionLinks(parent,a){
 function updateTitles(){
  document.title=config.title+' · MnMaps';document.querySelector('meta[name="description"]').content=config.description;
  document.querySelector('meta[property="og:title"]').content=document.title;document.querySelector('meta[property="og:description"]').content=config.description;
- $('breadcrumb').textContent=config.breadcrumb;$('cartouche-kicker').textContent=config.cartoucheKicker;$('map-name').textContent=config.title;$('map-subtitle').textContent=config.levelTitle||config.subtitle;
+ $('breadcrumb').textContent=config.breadcrumb;$('cartouche-kicker').textContent=config.cartoucheKicker;$('map-name').textContent=config.title;$('map-subtitle').textContent=config.levelSubtitle||config.levelTitle||config.subtitle;
+ document.body.classList.toggle('has-view-note',!!config.viewNote);
+ for(const [id,anchor] of [['map-view-note',$('map-frame')],['guide-view-note',document.querySelector('.journal-heading')],['about-view-note',$('about-attribution')]]){
+  let note=$(id);if(!note){note=text('p','');note.id=id;if(id==='map-view-note')anchor.append(note);else anchor.after(note);}
+  note.textContent=config.viewNote||'';note.hidden=!config.viewNote;
+ }
  // A page cached from before levels existed lacks this container; create it rather than failing to load.
  let controls=$('level-controls');if(!controls){controls=document.createElement('div');controls.id='level-controls';controls.className='level-controls';controls.setAttribute('role','group');controls.setAttribute('aria-label','Map level');$('map-frame').append(controls);}
  controls.replaceChildren();controls.hidden=!config.levels;document.body.classList.toggle('has-levels',!!config.levels);
