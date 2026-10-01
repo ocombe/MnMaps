@@ -96,3 +96,12 @@ dialog{color:var(--foreground);background:var(--popover);border:1px solid var(--
 .level-controls button[aria-pressed="true"]{background:#5a3b22;border-color:var(--primary);color:#fff0cc}
 .embed .level-controls{top:136px;left:13px}
 @media(max-width:760px){.level-controls,.embed .level-controls{top:154px;left:14px}.level-controls button{padding:8px;font-size:11px}}
+/* Optional platform outlines share the atlas's ink and paper colours. */
+.platform-controls{margin:12px 0;padding:12px 0;border-top:1px solid #bca780}
+.platform-controls label{display:block;margin-bottom:6px;font-size:13px}
+.platform-controls select{width:100%;min-height:44px;font-size:13px}
+.platform-controls p{font-size:11px;line-height:1.5;opacity:.8}
+.platform-hit{pointer-events:fill!important;cursor:pointer}
+.platform-outline,.platform-footprint{pointer-events:none!important}
+.platform-hit:focus{stroke:#594022;stroke-width:2;stroke-opacity:1;outline:none}
+.platform-choices button{display:block;width:100%;min-height:44px;margin-top:5px;text-align:left}

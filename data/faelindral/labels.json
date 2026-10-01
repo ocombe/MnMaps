@@ -1,0 +1,247 @@
+{
+  "map": "faelindral",
+  "tileRevision": "v1",
+  "coordinateZoom": 3,
+  "labels": [
+    {
+      "id": "sentinels-terrace",
+      "name": "Sentinel's Terrace",
+      "x": 669.28,
+      "y": 570.41,
+      "level": "platforms",
+      "kind": "building",
+      "tier": "building",
+      "priority": 80,
+      "minZoom": 2.75,
+      "approximate": true,
+      "note": "Approximate location; adjustable in the alignment view."
+    },
+    {
+      "id": "wayguard-garrison",
+      "name": "Wayguard Garrison",
+      "x": 630.19,
+      "y": 603.2,
+      "level": "platforms",
+      "kind": "building",
+      "tier": "building",
+      "priority": 75,
+      "minZoom": 2.75,
+      "approximate": true,
+      "note": "Approximate location; adjustable in the alignment view."
+    },
+    {
+      "id": "traders-terrace",
+      "name": "Trader's Terrace",
+      "x": 721.69,
+      "y": 746.02,
+      "level": "platforms",
+      "kind": "building",
+      "tier": "building",
+      "priority": 80,
+      "minZoom": 2.75,
+      "approximate": true,
+      "note": "Approximate location; adjustable in the alignment view."
+    },
+    {
+      "id": "rangers-rest",
+      "name": "Ranger's Rest",
+      "x": 776.81,
+      "y": 721.77,
+      "level": "platforms",
+      "kind": "building",
+      "tier": "building",
+      "priority": 40,
+      "minZoom": 2.75,
+      "approximate": true,
+      "note": "Approximate location; adjustable in the alignment view."
+    },
+    {
+      "id": "quite-den",
+      "name": "Quite Den",
+      "x": 868.95,
+      "y": 726.4,
+      "level": "platforms",
+      "kind": "building",
+      "tier": "building",
+      "priority": 40,
+      "minZoom": 2.75,
+      "approximate": true,
+      "note": "Approximate location; adjustable in the alignment view."
+    },
+    {
+      "id": "well-of-order",
+      "name": "Well of Order",
+      "x": 609.08,
+      "y": 763.98,
+      "level": "platforms",
+      "kind": "building",
+      "tier": "building",
+      "priority": 40,
+      "minZoom": 2.75,
+      "approximate": true,
+      "note": "Approximate location; adjustable in the alignment view."
+    },
+    {
+      "id": "willows-whisper",
+      "name": "Willows Whisper",
+      "x": 725.8,
+      "y": 771.35,
+      "level": "platforms",
+      "kind": "building",
+      "tier": "building",
+      "priority": 40,
+      "minZoom": 2.75,
+      "approximate": true,
+      "note": "Approximate location; adjustable in the alignment view."
+    },
+    {
+      "id": "wayward-branch-inn",
+      "name": "Wayward Branch Inn",
+      "x": 603.63,
+      "y": 805.87,
+      "level": "platforms",
+      "kind": "building",
+      "tier": "building",
+      "priority": 40,
+      "minZoom": 2.75,
+      "approximate": true,
+      "note": "Approximate location; adjustable in the alignment view."
+    },
+    {
+      "id": "balanced-branch",
+      "name": "The Balanced Branch",
+      "x": 787.7,
+      "y": 853.52,
+      "level": "platforms",
+      "kind": "building",
+      "tier": "building",
+      "priority": 40,
+      "minZoom": 2.75,
+      "approximate": true,
+      "note": "Approximate location; adjustable in the alignment view."
+    },
+    {
+      "id": "lambent-lantern",
+      "name": "Lambent Lantern",
+      "x": 693.28,
+      "y": 837.95,
+      "level": "platforms",
+      "kind": "building",
+      "tier": "building",
+      "priority": 40,
+      "minZoom": 2.75,
+      "approximate": true,
+      "note": "Approximate location; adjustable in the alignment view."
+    },
+    {
+      "id": "heartwood-archives",
+      "name": "Heartwood Archives",
+      "x": 745.24,
+      "y": 899.88,
+      "level": "platforms",
+      "kind": "building",
+      "tier": "building",
+      "priority": 40,
+      "minZoom": 2.75,
+      "approximate": true,
+      "note": "Approximate location; adjustable in the alignment view."
+    },
+    {
+      "id": "lower-tier",
+      "name": "Lower Tier",
+      "x": 593.82,
+      "y": 939.29,
+      "level": "platforms",
+      "kind": "building",
+      "tier": "building",
+      "priority": 80,
+      "minZoom": 2.75,
+      "approximate": true,
+      "note": "Approximate location; adjustable in the alignment view."
+    }
+  ],
+  "trainers": [
+    {
+      "id": "guild-dru",
+      "abbreviations": [
+        "DRU"
+      ],
+      "classes": [
+        "Druid"
+      ],
+      "building": "Wayguard Garrison",
+      "x": 716.98,
+      "y": 612.39,
+      "level": "platforms"
+    },
+    {
+      "id": "guild-arc-war",
+      "abbreviations": [
+        "ARC",
+        "WAR"
+      ],
+      "classes": [
+        "Arcanist",
+        "Warrior"
+      ],
+      "building": "Wayguard Garrison",
+      "x": 623.52,
+      "y": 653.92,
+      "level": "platforms"
+    },
+    {
+      "id": "guild-rng",
+      "abbreviations": [
+        "RNG"
+      ],
+      "classes": [
+        "Ranger"
+      ],
+      "building": "Ranger's Rest",
+      "x": 776.9,
+      "y": 730.13,
+      "level": "platforms"
+    },
+    {
+      "id": "guild-bst",
+      "abbreviations": [
+        "BST"
+      ],
+      "classes": [
+        "Beastlord"
+      ],
+      "building": "Quite Den",
+      "x": 860.5,
+      "y": 735.93,
+      "level": "platforms"
+    },
+    {
+      "id": "guild-shm",
+      "abbreviations": [
+        "SHM"
+      ],
+      "classes": [
+        "Shaman"
+      ],
+      "building": "The Balanced Branch",
+      "x": 790.65,
+      "y": 858.03,
+      "level": "platforms"
+    },
+    {
+      "id": "guild-brd-rog",
+      "abbreviations": [
+        "BRD",
+        "ROG"
+      ],
+      "classes": [
+        "Bard",
+        "Rogue"
+      ],
+      "building": "Lambent Lantern",
+      "x": 699.98,
+      "y": 849.28,
+      "level": "platforms"
+    }
+  ]
+}

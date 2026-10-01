@@ -29,6 +29,19 @@ With `?align=1`, select a marker or place name, then drag it or click its new po
 Credits and licences
 --------------------
 
+Faelindral opens on Platforms; Ground is available from the level buttons. Hover
+a deck to trace its outline, or click an overlap to choose a platform beneath it.
+The visible rim is solid and the rest is dashed. The artwork stays unchanged.
+Ground shows dotted platform footprints. Landing arrows switch views at their
+destination; Temple Lift has only its lower landing marked for now.
+
+Faelindral place names, guilds, amenities and tradeskill locations are adapted
+from [Maggot's Faelindral wiki map](https://monstersandmemories.miraheze.org/wiki/File:Faelindral_V2.jpg)
+under [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/).
+The adapted datasets carry the same licence. Locations and platform names are
+approximate; ARC/FTR is shown as ARC/WAR. Marker and label positions can be
+adjusted with `?align=1` and exported for review.
+
 Underdocks place names and locations are adapted from [Keirvan's bottom floor wiki map](https://monstersandmemories.miraheze.org/wiki/File:UnderdocksBottomFloorCity.png)
 under [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/).
 Locations are approximate; positions are adjusted to this map and abbreviations expanded.

@@ -9,7 +9,7 @@ let embedded=false;try{embedded=window.self!==window.top;}catch{embedded=true;}
 const isEmbed=embedded||new URLSearchParams(location.search).get('embed')==='1';
 document.body.classList.toggle('embed',isEmbed);
 const compact=()=>isEmbed||mobileLayout.matches;
-let registry,map,config,originals=[],personal=[],pins=new Map(),placeIndex=[],hiddenController;
+let registry,map,config,originals=[],personal=[],pins=new Map(),placeIndex=[],hiddenController,platformController;
 let enabled=new Set(Object.keys(categories)),showPins=true,placing=false,draft=null,statusTimer;
 let alignmentMode=false,selectedAlignmentId=null,selectedAlignmentKind='marker',alignmentPositions={},alignmentLabelPositions={},publishedPositions=new Map(),publishedLabelPositions=new Map();
 let desktopPanelOpen=true,disposeLabels=()=>{},loadSerial=0,loading=false,applyingView=false,urlTimer,activePlace=null,sharedPin=null;
@@ -49,7 +49,8 @@ function allMarkers(){return [...originals,...personal];}
 function visibleMarkers(){const terms=$('search').value.toLocaleLowerCase().trim().split(/\s+/).filter(Boolean);return allMarkers().filter(m=>atLevel(m)&&enabled.has(m.category)&&terms.every(t=>(m.name+' '+m.category+' '+m.note).toLocaleLowerCase().includes(t)));}
 function refreshSearch(){$('clear-search').hidden=!$('search').value;drawMarkers();}
 function copyButton(place){const b=text('button','Copy link','copy-place');b.type='button';b.onclick=()=>copyLink(place);return b;}
-function popup(m){const n=text('div','');n.append(text('div',m.category+(m.id.startsWith('personal-')?' · Your note':''),'tag'),text('h3',m.name));if(m.note)n.append(text('p',m.note));n.append(copyButton(m));if(m.toLevel){const b=text('button',m.direction==='up'?'Go up':'Go down','level-link');b.type='button';b.onclick=()=>changeLevel(m.toLevel,{...m,id:m.toMarker,level:m.toLevel,kind:'marker'});n.append(b);}if(m.id.startsWith('personal-')){const edit=text('button','Edit note');edit.onclick=()=>openEditor(m);n.append(edit);}return n;}
+function switchAt(m){const destination=originals.find(row=>row.id===m.toMarker);if(destination)changeLevel(m.toLevel,{...destination,kind:'marker'});}
+function popup(m){const n=text('div','');n.append(text('div',m.category+(m.id.startsWith('personal-')?' · Your note':''),'tag'),text('h3',m.name));if(m.note)n.append(text('p',m.note));n.append(copyButton(m));if(m.toLevel){const b=text('button',m.direction==='up'?'Go up':'Go down','level-link');b.type='button';b.onclick=()=>switchAt(m);n.append(b);}if(m.id.startsWith('personal-')){const edit=text('button','Edit note');edit.onclick=()=>openEditor(m);n.append(edit);}return n;}
 function placePopup(p){const n=text('div','');n.append(text('div',p.kind==='hidden'?'Hidden area':'Place name','tag'),text('h3',p.name));if(p.note)n.append(text('p',p.note));n.append(copyButton(p));return n;}
 function choose(m){
  if(alignmentMode&&!m.id.startsWith('personal-'))selectAlignment(m,'marker');
@@ -74,9 +75,10 @@ function drawMarkers(){
   const icon=m.category==='Class trainer'?trainerIcon(m):L.divIcon({className:'pin',html:face,iconSize:[25,25],iconAnchor:[12,25],popupAnchor:[0,-23]});
   const canAlign=alignmentMode&&!m.id.startsWith('personal-');
   const pin=L.marker(locationOf(m),{icon,alt:m.name,keyboard:true,riseOnHover:true,draggable:canAlign}).bindPopup(popup(m),{autoPan:false});
+  pin.atlasMinZoom=m.minZoom;
   // The hover tooltip shows the name; an aria-label (not a title) keeps it accessible without a second browser tooltip.
   pin.on('add',()=>pin.getElement()?.setAttribute('aria-label',m.name));
-  pin.on('click',()=>choose(m));if(canAlign){pin.on('dragstart',()=>selectAlignment(m,'marker'));pin.on('dragend',()=>moveAlignedMarker(m.id,pin.getLatLng()));}
+  pin.on('click',()=>m.switchOnClick&&!alignmentMode?switchAt(m):choose(m));if(canAlign){pin.on('dragstart',()=>selectAlignment(m,'marker'));pin.on('dragend',()=>moveAlignedMarker(m.id,pin.getLatLng()));}
   pin.bindTooltip(()=>text('span',m.name),{direction:'top',offset:[0,-23]});if(showPins)pin.addTo(map);pins.set(m.id,pin);
   const b=text('button','','place'),glyph=text('span','','symbol');glyph.append(markerSymbol(m));b.append(glyph);
   const label=text('span','');label.append(text('strong',m.name),text('small',m.category+(m.id.startsWith('personal-')?' · Personal note':'')));b.append(label);b.onclick=()=>choose(m);list.append(b);
@@ -214,12 +216,12 @@ async function loadMap(id,url=new URL(location.href),push=false){
  if(push)url.searchParams.delete('level');
  for(const s of document.querySelectorAll('.map-select'))s.disabled=true;
  try{
-  const [markers,labels,hidden]=await Promise.all([fetchData(next.markersFile,[]),fetchData(next.labelsFile,{labels:[],trainers:[]}),fetchData(next.hiddenAreasFile,{areas:[],routes:[]})]);
+  const [markers,labels,hidden,platforms]=await Promise.all([fetchData(next.markersFile,[]),fetchData(next.labelsFile,{labels:[],trainers:[]}),fetchData(next.hiddenAreasFile,{areas:[],routes:[]}),fetchData(next.platformFootprintsFile||null,{platforms:[]})]);
   if(serial!==loadSerial)return;
   if(!Array.isArray(markers)||!Array.isArray(labels.labels)||!Array.isArray(labels.trainers)||!Array.isArray(hidden.areas))throw Error('Invalid map feature data');
   const wanted=url.searchParams.get('place'),dest=[...markers,...labels.labels,...hidden.areas,...(hidden.additionalAreas||[]),...(hidden.destinations||[])].find(p=>wanted&&(p.id===wanted||p.slug===wanted||slug(p.name)===wanted));
   if(base.levels){const level=base.levels.find(l=>l.id===(!push&&dest?.level?dest.level:url.searchParams.get('level')))||base.levels.find(l=>l.id===base.defaultLevel);next={...base,tilePath:level.tilePath,levelId:level.id,levelTitle:level.title};}
-  disposeLabels();hiddenController?.dispose();map?.remove();pins.clear();map=null;
+  disposeLabels();hiddenController?.dispose();platformController?.dispose();map?.remove();pins.clear();map=null;
   config=next;categories={...baseCategories,...(config.extraCategories||{})};setupCategoryControls();originals=markers;labelData=labels;hiddenData=hidden;publishedPositions=new Map(originals.map(m=>[m.id,[m.x,m.y]]));publishedLabelPositions=new Map(labels.labels.map(r=>[r.id,[r.x,r.y]]));
   activePlace=null;sharedPin=null;cancelPlacement();if($('editor').open)closeEditor();$('search').value='';enabled=new Set(Object.keys(categories));showPins=true;updateCategoryButtons();
   alignmentMode=url.searchParams.has('align');document.body.classList.toggle('aligning',alignmentMode);restoreStorage();updateTitles();
@@ -227,7 +229,7 @@ async function loadMap(id,url=new URL(location.href),push=false){
   const bounds=mapBounds();map.setMaxBounds(bounds);
   L.tileLayer(config.tilePath+'?v='+encodeURIComponent(config.tileRevision),{tileSize:config.tileSize,minZoom:config.minZoom,maxZoom:config.maxZoom,maxNativeZoom:config.maxNativeZoom,noWrap:true,bounds,keepBuffer:1,attribution:text('span',config.attribution.map).outerHTML}).on('tileerror',()=>status('A map tile could not load. Please reload.')).addTo(map);
   const currentHidden={...hiddenData};for(const key of ['areas','additionalAreas','routes','connections','destinations','levelStacks'])if(Array.isArray(hiddenData[key]))currentHidden[key]=hiddenData[key].filter(atLevel);
-  fitMap();disposeLabels=setupPlaceLabels(labelData);hiddenController=setupHiddenAreas(map,config,currentHidden);
+  fitMap();disposeLabels=setupPlaceLabels(labelData);hiddenController=setupHiddenAreas(map,config,currentHidden);platformController=setupPlatforms(map,config,platforms);
   buildPlaceIndex();refreshSearch();setPanel(!compact()&&desktopPanelOpen);$('hidden-controls').hidden=!config.hiddenAreasFile||!(currentHidden.areas.length||(currentHidden.additionalAreas||[]).length);$('alignment-tools').hidden=!alignmentMode;$('add').hidden=alignmentMode;updateAlignmentStatus();
   map.on('movestart',()=>{if(!applyingView){activePlace=null;sharedPin?.remove();sharedPin=null;}});
   map.on('moveend zoomend',()=>{updateZoom();scheduleUrl();});

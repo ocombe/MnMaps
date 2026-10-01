@@ -39,6 +39,7 @@ const categoryPaths = {
 };
 function tradeskillName(marker){return marker.category==='Tradeskill'?marker.name.split(/\s+[—–-]\s+/)[0].trim():'';}
 function markerSymbol(marker){
+  if(marker.toLevel)return text('b',marker.direction==='up'?'↑':'↓');
   const skill=tradeskillName(marker), path=Object.hasOwn(tradePaths,skill)?tradePaths[skill]:(Object.hasOwn(categoryPaths,marker.category)?categoryPaths[marker.category]:null);
   if(!path)return text('b',categories[marker.category][0]);
   const ns='http://www.w3.org/2000/svg',svg=document.createElementNS(ns,'svg');

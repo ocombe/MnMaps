@@ -160,6 +160,74 @@
       },
       "hiddenPrimaryStack": null,
       "legacyStorage": {}
+    },
+    {
+      "id": "faelindral",
+      "title": "Faelindral",
+      "subtitle": "The city in the trees",
+      "cartoucheKicker": "Among the branches",
+      "breadcrumb": "Monsters & Memories / Faelindral",
+      "description": "An illustrated fan atlas of Faelindral. Follow paths through the forest and explore the platforms above, with place names and personal field notes.",
+      "width": 2048,
+      "height": 1722,
+      "minZoom": 0,
+      "maxNativeZoom": 3,
+      "maxZoom": 5,
+      "coordinateZoom": 3,
+      "tileSize": 256,
+      "tileRevision": "v1",
+      "tilePath": "assets/tiles/faelindral/platforms/{z}/{x}/{y}.webp",
+      "markersFile": "data/faelindral/markers.json",
+      "labelsFile": "data/faelindral/labels.json",
+      "hiddenAreasFile": null,
+      "platformFootprintsFile": "data/faelindral/platforms.json",
+      "defaultView": {
+        "mode": "fit",
+        "padding": 18,
+        "placeZoom": 3.5
+      },
+      "defaultLevel": "platforms",
+      "levels": [
+        {
+          "id": "platforms",
+          "title": "Platforms",
+          "tilePath": "assets/tiles/faelindral/platforms/{z}/{x}/{y}.webp"
+        },
+        {
+          "id": "ground",
+          "title": "Ground",
+          "tilePath": "assets/tiles/faelindral/ground/{z}/{x}/{y}.webp"
+        }
+      ],
+      "extraCategories": {
+        "Lift": [
+          "↕",
+          "#64795b"
+        ],
+        "Level connection": [
+          "↕",
+          "#64795b"
+        ],
+        "Vendor": [
+          "◇",
+          "#876036"
+        ],
+        "Respawn point": [
+          "★",
+          "#614b32"
+        ]
+      },
+      "attribution": {
+        "map": "Illustrated fan atlas · Not an official game map",
+        "text": "Place names, guilds & amenities adapted from Maggot's Faelindral wiki map · approximate",
+        "sourceTitle": "Maggot's Faelindral wiki map",
+        "sourceUrl": "https://monstersandmemories.miraheze.org/wiki/File:Faelindral_V2.jpg",
+        "license": "CC BY-SA 4.0",
+        "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+        "changes": "Place names, guilds, amenities and tradeskill locations adapted from Maggot's Faelindral wiki map (CC BY-SA 4.0). Positions adjusted to this atlas and approximate. ARC/FTR updated to ARC/WAR."
+      },
+      "hiddenPrimaryStack": null,
+      "legacyStorage": {}
     }
   ]
 }
