@@ -9,7 +9,7 @@ let embedded=false;try{embedded=window.self!==window.top;}catch{embedded=true;}
 const isEmbed=embedded||new URLSearchParams(location.search).get('embed')==='1';
 document.body.classList.toggle('embed',isEmbed);
 const compact=()=>isEmbed||mobileLayout.matches;
-let registry,map,config,originals=[],personal=[],pins=new Map(),placeIndex=[],hiddenController,platformController;
+let registry,map,config,originals=[],personal=[],pins=new Map(),placeIndex=[],hiddenController;
 let enabled=new Set(Object.keys(categories)),showPins=true,placing=false,draft=null,statusTimer;
 let alignmentMode=false,selectedAlignmentId=null,selectedAlignmentKind='marker',alignmentPositions={},alignmentLabelPositions={},publishedPositions=new Map(),publishedLabelPositions=new Map();
 let desktopPanelOpen=true,disposeLabels=()=>{},loadSerial=0,loading=false,applyingView=false,urlTimer,activePlace=null,sharedPin=null;
@@ -215,7 +215,7 @@ function validateRegistry(data){
  if(data.version!==1||!Array.isArray(data.maps)||!data.maps.length||!data.maps.some(m=>m.id===data.defaultMap)||new Set(data.maps.map(m=>m.id)).size!==data.maps.length)throw Error('Invalid map registry');
  for(const c of data.maps){if(!/^[a-z0-9-]+$/.test(c.id)||!c.title||!c.description||![c.width,c.height,c.coordinateZoom,c.minZoom,c.maxZoom,c.maxNativeZoom,c.tileSize].every(Number.isFinite)||c.width<=0||c.height<=0||c.maxZoom<c.minZoom||!localPath(c.tilePath)||!localPath(c.markersFile)||!c.defaultView)throw Error('Invalid map configuration');}
  for(const c of data.maps)if(c.levels){if(!Array.isArray(c.levels)||!c.levels.length||new Set(c.levels.map(l=>l.id)).size!==c.levels.length||!c.levels.some(l=>l.id===c.defaultLevel)||!c.levels.every(l=>/^[a-z0-9-]+$/.test(l.id)&&l.title&&localPath(l.tilePath)))throw Error('Invalid map levels');}
- for(const base of data.maps)for(const level of base.levels||[]){const c=levelConfig(base,level);if(![c.width,c.height,c.coordinateZoom,c.minZoom,c.maxZoom,c.maxNativeZoom,c.tileSize].every(Number.isFinite)||c.width<=0||c.height<=0||c.minZoom>c.maxNativeZoom||c.maxNativeZoom>c.maxZoom||!['markersFile','labelsFile','hiddenAreasFile','platformFootprintsFile'].every(k=>c[k]==null||localPath(c[k])))throw Error('Invalid level configuration');}
+ for(const base of data.maps)for(const level of base.levels||[]){const c=levelConfig(base,level);if(![c.width,c.height,c.coordinateZoom,c.minZoom,c.maxZoom,c.maxNativeZoom,c.tileSize].every(Number.isFinite)||c.width<=0||c.height<=0||c.minZoom>c.maxNativeZoom||c.maxNativeZoom>c.maxZoom||!['markersFile','labelsFile','hiddenAreasFile'].every(k=>c[k]==null||localPath(c[k])))throw Error('Invalid level configuration');}
  return data;
 }
 async function loadMap(id,url=new URL(location.href),push=false){
@@ -224,19 +224,18 @@ async function loadMap(id,url=new URL(location.href),push=false){
  if(push)url.searchParams.delete('level');
  for(const s of document.querySelectorAll('.map-select'))s.disabled=true;
  try{
-  let [markers,labels,hidden,platforms]=await Promise.all([fetchData(next.markersFile,[]),fetchData(next.labelsFile,{labels:[],trainers:[]}),fetchData(next.hiddenAreasFile,{areas:[],routes:[]}),fetchData(next.platformFootprintsFile||null,{platforms:[]})]);
+  let [markers,labels,hidden]=await Promise.all([fetchData(next.markersFile,[]),fetchData(next.labelsFile,{labels:[],trainers:[]}),fetchData(next.hiddenAreasFile,{areas:[],routes:[]})]);
   if(serial!==loadSerial)return;
   if(!Array.isArray(markers)||!Array.isArray(labels.labels)||!Array.isArray(labels.trainers)||!Array.isArray(hidden.areas))throw Error('Invalid map feature data');
   const wanted=url.searchParams.get('place'),dest=[...markers,...labels.labels,...hidden.areas,...(hidden.additionalAreas||[]),...(hidden.destinations||[])].find(p=>wanted&&(p.id===wanted||p.slug===wanted||slug(p.name)===wanted));
   if(base.levels){const level=base.levels.find(l=>l.id===(!push&&dest?.level?dest.level:url.searchParams.get('level')))||base.levels.find(l=>l.id===base.defaultLevel);next=levelConfig(base,level);}
-  [markers,labels,hidden,platforms]=await Promise.all([
+  [markers,labels,hidden]=await Promise.all([
    next.markersFile===base.markersFile?markers:fetchData(next.markersFile,[]),
    next.labelsFile===base.labelsFile?labels:fetchData(next.labelsFile,{labels:[],trainers:[]}),
-   next.hiddenAreasFile===base.hiddenAreasFile?hidden:fetchData(next.hiddenAreasFile,{areas:[],routes:[]}),
-   next.platformFootprintsFile===base.platformFootprintsFile?platforms:fetchData(next.platformFootprintsFile||null,{platforms:[]})]);
+   next.hiddenAreasFile===base.hiddenAreasFile?hidden:fetchData(next.hiddenAreasFile,{areas:[],routes:[]})]);
   if(serial!==loadSerial)return;
   if(!Array.isArray(markers)||!Array.isArray(labels.labels)||!Array.isArray(labels.trainers)||!Array.isArray(hidden.areas))throw Error('Invalid map feature data');
-  disposeLabels();hiddenController?.dispose();platformController?.dispose();map?.remove();pins.clear();map=null;
+  disposeLabels();hiddenController?.dispose();map?.remove();pins.clear();map=null;
   config=next;categories={...baseCategories,...(config.extraCategories||{})};setupCategoryControls();originals=markers;labelData=labels;hiddenData=hidden;publishedPositions=new Map(originals.map(m=>[m.id,[m.x,m.y]]));publishedLabelPositions=new Map(labels.labels.map(r=>[r.id,[r.x,r.y]]));
   activePlace=null;sharedPin=null;cancelPlacement();if($('editor').open)closeEditor();$('search').value='';enabled=new Set(Object.keys(categories));showPins=true;updateCategoryButtons();
   alignmentMode=url.searchParams.has('align');document.body.classList.toggle('aligning',alignmentMode);restoreStorage();updateTitles();
@@ -244,7 +243,7 @@ async function loadMap(id,url=new URL(location.href),push=false){
   const bounds=mapBounds();map.setMaxBounds(bounds);
   L.tileLayer(config.tilePath+'?v='+encodeURIComponent(config.tileRevision),{tileSize:config.tileSize,minZoom:config.minZoom,maxZoom:config.maxZoom,maxNativeZoom:config.maxNativeZoom,noWrap:true,bounds,keepBuffer:1,attribution:text('span',config.attribution.map).outerHTML}).on('tileerror',()=>status('A map tile could not load. Please reload.')).addTo(map);
   const currentHidden={...hiddenData};for(const key of ['areas','additionalAreas','routes','connections','destinations','levelStacks'])if(Array.isArray(hiddenData[key]))currentHidden[key]=hiddenData[key].filter(atLevel);
-  fitMap();disposeLabels=setupPlaceLabels(labelData);hiddenController=setupHiddenAreas(map,config,currentHidden);platformController=setupPlatforms(map,config,platforms);
+  fitMap();disposeLabels=setupPlaceLabels(labelData);hiddenController=setupHiddenAreas(map,config,currentHidden);
   buildPlaceIndex();refreshSearch();setPanel(!compact()&&desktopPanelOpen);$('hidden-controls').hidden=!config.hiddenAreasFile||!(currentHidden.areas.length||(currentHidden.additionalAreas||[]).length);$('alignment-tools').hidden=!alignmentMode;$('add').hidden=alignmentMode;updateAlignmentStatus();
   map.on('movestart',()=>{if(!applyingView){activePlace=null;sharedPin?.remove();sharedPin=null;}});
   map.on('moveend zoomend',()=>{updateZoom();scheduleUrl();});

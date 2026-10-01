@@ -29,11 +29,10 @@ With `?align=1`, select a marker or place name, then drag it or click its new po
 Credits and licences
 --------------------
 
-Faelindral opens on Platforms; Ground and Overview are available from the level buttons. Hover
-a deck to trace its outline, or click an overlap to choose a platform beneath it.
-The visible rim is solid and the rest is dashed. The artwork stays unchanged.
-Ground shows dotted platform footprints. Landing arrows switch views at their
-destination; Temple Lift has only its lower landing marked for now.
+Faelindral opens on Platforms; Ground and Overview are available from the level
+buttons. The two main views show the original artwork, without platform hover
+outlines or dotted cutouts. Landing arrows switch views at their destination;
+Temple Lift has only its lower landing marked for now.
 
 Overview follows the layout of Maggot's community map, with place names and no
 published markers or landing arrows. It uses a separate chart: switching to or

@@ -180,7 +180,6 @@
       "markersFile": "data/faelindral/markers.json",
       "labelsFile": "data/faelindral/labels.json",
       "hiddenAreasFile": null,
-      "platformFootprintsFile": "data/faelindral/platforms.json",
       "defaultView": {
         "mode": "fit",
         "padding": 18,
@@ -212,7 +211,6 @@
           "labelsFile": "data/faelindral/overview-labels.json",
           "markersFile": null,
           "hiddenAreasFile": null,
-          "platformFootprintsFile": null,
           "attribution": {
             "map": "Illustrated fan atlas · Not an official game map",
             "text": "Overview adapted from Maggot's Faelindral map (CC BY-SA 4.0)",
