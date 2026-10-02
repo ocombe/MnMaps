@@ -118,3 +118,7 @@ dialog fieldset{border:0;padding:0;margin:13px 0 0;min-width:0}dialog legend{fon
 .exit-arrows>div{display:grid;grid-template-columns:repeat(3,40px);gap:4px}.exit-arrows label{margin:0}
 .exit-arrows label span{display:grid;place-items:center;height:36px;border:1px solid var(--border);border-radius:8px;background:var(--muted);color:var(--foreground);cursor:pointer;font-size:18px}
 #editor{margin-top:max(14px,8dvh)}
+/* Newer edition notice, in the map's lower-left corner. */
+.update-notice{position:absolute;z-index:850;left:16px;bottom:16px;display:flex;align-items:center;gap:8px;max-width:calc(100% - 32px);padding:8px 8px 8px 14px;border:1px solid var(--amber-border);border-radius:10px;background:var(--popover);color:var(--foreground);box-shadow:var(--shadow);font-size:12px}
+.update-notice button{font-size:12px;padding:6px 12px}#update-dismiss{border:0;background:none;font-size:18px;padding:2px 6px;color:var(--muted-foreground)}
+.has-view-note .update-notice{bottom:112px}

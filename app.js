@@ -336,5 +336,16 @@ function setupControls(){
  for(const s of document.querySelectorAll('.map-select')){for(const c of registry.maps){const option=text('option',c.title);option.value=c.id;s.append(option);}s.onchange=()=>loadMap(s.value,new URL(location.href),true);}
  window.addEventListener('popstate',()=>{const url=new URL(location.href);ownView=true;loadMap(url.searchParams.get('map')||registry.defaultMap,url);});
 }
-async function init(){try{registry=validateRegistry(await fetchData('data/maps.json'));for(const c of registry.maps)for(const extra of [c.extraCategories,...(c.levels||[]).map(l=>l.extraCategories)])for(const [k,v] of Object.entries(extra||{}))if(!Object.hasOwn(allCategories,k))allCategories[k]=v;setupControls();await loadMap(new URLSearchParams(location.search).get('map')||registry.defaultMap);}catch(e){status('The atlas could not load. '+e.message,true);}}
+// Every publish refreshes each file's Last-Modified, so one small HEAD request spots a newer edition.
+const updateInterval=15*60*1000;let updateStamp=null,updateCheckedAt=0;
+async function checkForUpdate(){
+ if((document.hidden&&updateStamp!==null)||!$('update-notice').hidden)return;updateCheckedAt=Date.now();
+ try{const r=await fetch('site.webmanifest',{method:'HEAD',cache:'no-store'}),stamp=r.ok&&(r.headers.get('last-modified')||r.headers.get('etag'));if(!stamp)return;if(updateStamp===null)updateStamp=stamp;else if(stamp!==updateStamp){updateStamp=stamp;$('update-notice').hidden=false;}}catch{}
+}
+function watchForUpdates(){
+ $('update-reload').onclick=()=>location.reload();$('update-dismiss').onclick=()=>$('update-notice').hidden=true;
+ const due=()=>Date.now()-updateCheckedAt>=updateInterval&&checkForUpdate();
+ checkForUpdate();setInterval(due,60000);document.addEventListener('visibilitychange',due);
+}
+async function init(){try{registry=validateRegistry(await fetchData('data/maps.json'));for(const c of registry.maps)for(const extra of [c.extraCategories,...(c.levels||[]).map(l=>l.extraCategories)])for(const [k,v] of Object.entries(extra||{}))if(!Object.hasOwn(allCategories,k))allCategories[k]=v;setupControls();watchForUpdates();await loadMap(new URLSearchParams(location.search).get('map')||registry.defaultMap);}catch(e){status('The atlas could not load. '+e.message,true);}}
 init();
