@@ -6,7 +6,7 @@ An illustrated community atlas of Monsters & Memories, with Night Harbor and a l
 
 Drag to pan, scroll or pinch to zoom, and search the field guide for places, trainers and tradeskills. Select a result to visit it. Toggle place names or hidden areas independently; tap a dashed area or use the level buttons to bring a room or passage forward. Hidden outlines and guild locations are approximate.
 
-Add personal markers and notes to keep your own field guide. They stay in your browser. Use **Export notes** for a backup and **Import notes** to move them to another device. Existing notes remain available; **Export previous notes** keeps older-map notes available for repositioning.
+Add personal notes to keep your own field guide: drag a new note into place, then show it as any marker type, an area label or a zone exit with an arrow. Drag a saved note to move it. Notes stay in your browser. Use **Export notes** for a backup and **Import notes** to move them to another device. Existing notes remain available; **Export previous notes** keeps older-map notes available for repositioning.
 
 Use **Copy link** in a popup or **Share this view** in the map toolbar. Links share a place or view without personal note text. The atlas also supports a compact layout in an iframe and a fullscreen button when permitted by the host page.
 
@@ -24,7 +24,7 @@ drafts use the earlier positions and do not apply to v2; their browser storage i
 retained, but they are not loaded on this edition. The supplied places already
 use the updated positions.
 
-With `?align=1`, select a marker or place name, then drag it or click its new position. Corrections stay in this browser and can be restored or exported.
+With `?align=1`, drag a marker or place name to its new position. Corrections stay in this browser and can be restored or exported.
 
 Credits and licences
 --------------------
