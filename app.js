@@ -3,14 +3,16 @@
 const $=id=>document.getElementById(id);
 const text=(tag,value,cls)=>{const n=document.createElement(tag);n.textContent=value;if(cls)n.className=cls;return n;};
 const baseCategories={'Bank':['▣','#916c30'],'Inn':['☾','#9a543a'],'Stable':['♞','#665e3e'],'Shady merchant':['♧','#785268'],'Tradeskill':['⚒','#385f60'],'Class trainer':['◈','#4e4668'],'Personal':['✧','#a04438']};
-let categories={...baseCategories};
+// Note-only types; a map's own extraCategories override these colours and glyphs.
+const noteCategories={'Quest':['!','#b5861f'],'Mob camp':['☠','#6e2f2a'],'Vendor':['◇','#876036']};
+let categories={...baseCategories},allCategories={...baseCategories,...noteCategories};
 const mobileLayout=matchMedia('(max-width: 760px)');
 let embedded=false;try{embedded=window.self!==window.top;}catch{embedded=true;}
 const isEmbed=embedded||new URLSearchParams(location.search).get('embed')==='1';
 document.body.classList.toggle('embed',isEmbed);
 const compact=()=>isEmbed||mobileLayout.matches;
 let registry,map,config,originals=[],personal=[],pins=new Map(),placeIndex=[],hiddenController;
-let enabled=new Set(Object.keys(categories)),showPins=true,placing=false,draft=null,statusTimer;
+let enabled=new Set(Object.keys(categories)),showPins=true,draftPin=null,draft=null,statusTimer;
 let alignmentMode=false,selectedAlignmentId=null,selectedAlignmentKind='marker',alignmentPositions={},alignmentLabelPositions={},publishedPositions=new Map(),publishedLabelPositions=new Map();
 let desktopPanelOpen=true,disposeLabels=()=>{},loadSerial=0,loading=false,applyingView=false,urlTimer,activePlace=null,sharedPin=null;
 const atLevel=row=>!config.levels||!row.level||row.level===config.levelId;
@@ -42,7 +44,7 @@ function status(message,sticky=false){clearTimeout(statusTimer);$('status').text
 function locationOf(m){return map.unproject([m.x,m.y],config.coordinateZoom);}
 function pixelsOf(latlng){const p=map.project(latlng,config.coordinateZoom);return [Math.round(p.x),Math.round(p.y)];}
 function bounded(x,y,z=map.getZoom()){return Number.isFinite(x)&&Number.isFinite(y)&&Number.isFinite(z)&&x>=0&&y>=0&&x<=config.width&&y<=config.height&&z>=config.minZoom&&z<=config.maxZoom;}
-function valid(m){return m&&validLevel(m.level)&&typeof m.id==='string'&&/^personal-[a-zA-Z0-9-]{1,80}$/.test(m.id)&&typeof m.name==='string'&&m.name.trim()&&m.name.length<=100&&typeof m.note==='string'&&m.note.length<=2000&&Object.hasOwn(categories,m.category)&&Number.isFinite(m.x)&&m.x>=0&&m.x<=config.width&&Number.isFinite(m.y)&&m.y>=0&&m.y<=config.height;}
+function valid(m){return m&&validLevel(m.level)&&typeof m.id==='string'&&/^personal-[a-zA-Z0-9-]{1,80}$/.test(m.id)&&typeof m.name==='string'&&m.name.trim()&&m.name.length<=100&&typeof m.note==='string'&&m.note.length<=2000&&Object.hasOwn(categories,m.category)&&[undefined,'label','exit'].includes(m.noteType)&&(m.arrow===undefined||Object.hasOwn(exitArrows,m.arrow))&&(m.trade===undefined||Object.hasOwn(tradePaths,m.trade))&&Number.isFinite(m.x)&&m.x>=0&&m.x<=config.width&&Number.isFinite(m.y)&&m.y>=0&&m.y<=config.height;}
 function persist(next){try{localStorage.setItem(storageKey('notes'),JSON.stringify(next));personal=next;return true;}catch{status('Your browser could not save this change. Free some storage and try again.',true);return false;}}
 function download(data,name){const url=URL.createObjectURL(new Blob([JSON.stringify(data,null,2)],{type:'application/json'})),a=text('a','');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}
 function allMarkers(){return [...originals,...personal];}
@@ -50,7 +52,8 @@ function visibleMarkers(){const terms=$('search').value.toLocaleLowerCase().trim
 function refreshSearch(){$('clear-search').hidden=!$('search').value;drawMarkers();}
 function copyButton(place){const b=text('button','Copy link','copy-place');b.type='button';b.onclick=()=>copyLink(place);return b;}
 function switchAt(m){const destination=originals.find(row=>row.id===m.toMarker);if(destination)changeLevel(m.toLevel,{...destination,kind:'marker'});}
-function popup(m){const n=text('div','');n.append(text('div',m.category+(m.id.startsWith('personal-')?' · Your note':''),'tag'),text('h3',m.name));if(m.note)n.append(text('p',m.note));n.append(copyButton(m));if(m.toLevel){const b=text('button',m.direction==='up'?'Go up':'Go down','level-link');b.type='button';b.onclick=()=>switchAt(m);n.append(b);}if(m.id.startsWith('personal-')){const edit=text('button','Edit note');edit.onclick=()=>openEditor(m);n.append(edit);}return n;}
+const noteKind=m=>m.noteType==='label'?'Area label':m.noteType==='exit'?'Zone exit':m.category;
+function popup(m){const n=text('div','');n.append(text('div',noteKind(m)+(m.id.startsWith('personal-')?' · Your note':''),'tag'),text('h3',m.name));if(m.note)n.append(text('p',m.note));n.append(copyButton(m));if(m.toLevel){const b=text('button',m.direction==='up'?'Go up':'Go down','level-link');b.type='button';b.onclick=()=>switchAt(m);n.append(b);}if(m.id.startsWith('personal-')){const edit=text('button','Edit note');edit.onclick=()=>openEditor(m);n.append(edit);}return n;}
 function placePopup(p){const n=text('div','');n.append(text('div',p.kind==='hidden'?'Hidden area':'Place name','tag'),text('h3',p.name));if(p.note)n.append(text('p',p.note));n.append(copyButton(p));return n;}
 function choose(m){
  if(alignmentMode&&!m.id.startsWith('personal-'))selectAlignment(m,'marker');
@@ -67,21 +70,27 @@ function openPlace(p,zoom=config.defaultView.placeZoom){
  else {if(p.kind==='hidden')hiddenController?.show(p.id);L.popup({autoPan:false}).setLatLng(locationOf(p)).setContent(placePopup(p)).openOn(map);}
  activePlace=p;applyingView=false;if(compact())setPanel(false);scheduleUrl();
 }
+function pinIcon(m){
+ // Personal area labels and zone exits are lettering, drawn like the map's own names.
+ if(m.noteType)return L.divIcon({className:'personal-label-anchor',html:text('span',(m.noteType==='exit'?(exitArrows[m.arrow]||'→')+' ':'')+m.name,'personal-label '+(m.noteType==='exit'?'exit':'district')),iconSize:[0,0],iconAnchor:[0,0],popupAnchor:[0,-12]});
+ if(m.category==='Class trainer')return trainerIcon(m);
+ const face=text('span','');face.style.setProperty('--pin',categories[m.category][1]);face.append(markerSymbol(m));
+ return L.divIcon({className:'pin',html:face,iconSize:[25,25],iconAnchor:[12,25],popupAnchor:[0,-23]});
+}
 function drawMarkers(){
  for(const pin of pins.values())pin.remove();pins.clear();const list=$('results');list.replaceChildren();
  const matches=visibleMarkers();$('count').textContent=matches.length+' places';
  for(const m of matches){
-  const face=text('span','');face.style.setProperty('--pin',categories[m.category][1]);face.append(markerSymbol(m));
-  const icon=m.category==='Class trainer'?trainerIcon(m):L.divIcon({className:'pin',html:face,iconSize:[25,25],iconAnchor:[12,25],popupAnchor:[0,-23]});
-  const canAlign=alignmentMode&&!m.id.startsWith('personal-');
-  const pin=L.marker(locationOf(m),{icon,alt:m.name,keyboard:true,riseOnHover:true,draggable:canAlign}).bindPopup(popup(m),{autoPan:false});
+  const own=m.id.startsWith('personal-'),canAlign=alignmentMode&&!own;
+  const pin=L.marker(locationOf(m),{icon:pinIcon(m),alt:m.name,keyboard:true,riseOnHover:true,draggable:canAlign||own}).bindPopup(popup(m),{autoPan:false});
   pin.atlasMinZoom=m.minZoom;
   // The hover tooltip shows the name; an aria-label (not a title) keeps it accessible without a second browser tooltip.
   pin.on('add',()=>pin.getElement()?.setAttribute('aria-label',m.name));
   pin.on('click',()=>m.switchOnClick&&!alignmentMode?switchAt(m):choose(m));if(canAlign){pin.on('dragstart',()=>selectAlignment(m,'marker'));pin.on('dragend',()=>moveAlignedMarker(m.id,pin.getLatLng()));}
-  pin.bindTooltip(()=>text('span',m.name),{direction:'top',offset:[0,-23]});if(showPins)pin.addTo(map);pins.set(m.id,pin);
+  if(own)pin.on('dragend',()=>movePersonal(m.id,pin.getLatLng()));
+  if(!m.noteType)pin.bindTooltip(()=>text('span',m.name),{direction:'top',offset:[0,-23]});if(showPins)pin.addTo(map);pins.set(m.id,pin);
   const b=text('button','','place'),glyph=text('span','','symbol');glyph.append(markerSymbol(m));b.append(glyph);
-  const label=text('span','');label.append(text('strong',m.name),text('small',m.category+(m.id.startsWith('personal-')?' · Personal note':'')));b.append(label);b.onclick=()=>choose(m);list.append(b);
+  const label=text('span','');label.append(text('strong',m.name),text('small',noteKind(m)+(m.id.startsWith('personal-')?' · Personal note':'')));b.append(label);b.onclick=()=>choose(m);list.append(b);
  }
  // Place names and hidden areas can be found even when their visual layer hides.
  const terms=$('search').value.toLocaleLowerCase().trim().split(/\s+/).filter(Boolean);
@@ -92,10 +101,30 @@ function drawMarkers(){
 }
 function setPanel(open){if(!compact())desktopPanelOpen=open;$('journal').classList.toggle('closed',!open);for(const id of ['toggle-panel','embed-guide'])$(id).setAttribute('aria-expanded',String(open));map?.invalidateSize({pan:true,animate:false});}
 function updateCategoryButtons(){for(const b of $('categories').children)b.setAttribute('aria-pressed',String(enabled.has(b.dataset.category)));$('hide-pins').setAttribute('aria-pressed',String(showPins));}
-function cancelPlacement(){placing=false;document.body.classList.remove('placing');$('cancel-place').hidden=true;}
-function openEditor(m){draft={...m};$('editor-title').textContent=personal.some(p=>p.id===m.id)?'Your discovery':'A new discovery';$('name').value=m.name;$('category').value=m.category;$('note').value=m.note;$('delete').hidden=!personal.some(p=>p.id===m.id);$('editor').showModal();$('name').focus();}
+function cancelPlacement(){draftPin?.remove();draftPin=null;document.body.classList.remove('placing');$('cancel-place').hidden=true;}
+// New notes start at the centre of the view; dropping the pin opens the editor there.
+function startPlacement(){
+ map.closePopup();cancelPlacement();
+ const [cx,cy]=pixelsOf(map.getCenter()),start={x:Math.max(0,Math.min(config.width,cx)),y:Math.max(0,Math.min(config.height,cy)),category:'Personal',name:''};
+ draftPin=L.marker(locationOf(start),{icon:pinIcon(start),alt:'New personal note',keyboard:true,draggable:true,zIndexOffset:1000}).addTo(map);
+ draftPin.getElement()?.classList.add('draft-pin');
+ const drop=()=>{const [x,y]=pixelsOf(draftPin.getLatLng());if(!bounded(x,y)){status('Drag the note inside '+config.title+'.',true);return;}openEditor({id:'personal-'+crypto.randomUUID(),name:'',note:'',category:'Personal',x,y,...(config.levels?{level:config.levelId}:{})});};
+ draftPin.on('dragend',drop);draftPin.on('click',drop);
+ document.body.classList.add('placing');$('cancel-place').hidden=false;status('Drag the new note to its place, then let go.',true);if(compact())setPanel(false);
+}
+function movePersonal(id,latlng){
+ const m=personal.find(p=>p.id===id),point=pixelsOf(latlng);if(!m)return;
+ if(!bounded(...point)){status('Choose a point inside the illustration.');drawMarkers();return;}
+ if(persist(personal.map(p=>p.id===id?{...p,x:point[0],y:point[1]}:p))){buildPlaceIndex();status(`Moved ${m.name}.`);}
+ drawMarkers();
+}
+function noteTypeValue(){return document.querySelector('input[name="note-type"]:checked')?.value||'marker';}
+function updateEditorFields(){const type=noteTypeValue();$('marker-fields').hidden=type!=='marker';$('trade-field').hidden=type!=='marker'||$('category').value!=='Tradeskill';$('exit-fields').hidden=type!=='exit';}
+function openEditor(m){draft={...m};$('editor-title').textContent=personal.some(p=>p.id===m.id)?'Your discovery':'A new discovery';$('name').value=m.name;$('category').value=m.category;$('note').value=m.note;
+ for(const r of document.querySelectorAll('input[name="note-type"]'))r.checked=r.value===(m.noteType||'marker');$('trade').value=m.trade||'';
+ for(const r of document.querySelectorAll('input[name="exit-arrow"]'))r.checked=r.value===(m.arrow||'north');updateEditorFields();$('delete').hidden=!personal.some(p=>p.id===m.id);$('editor').showModal();$('name').focus();}
 function closeEditor(){draft=null;$('editor').close();}
-function selectAlignment(row,kind){selectedAlignmentId=row.id;selectedAlignmentKind=kind;schedulePlaceLabels();status(`Selected ${row.name}. Drag it or click the correct position on the map.`,true);}
+function selectAlignment(row,kind){selectedAlignmentId=row.id;selectedAlignmentKind=kind;schedulePlaceLabels();status(`Selected ${row.name}. Drag it to its correct position.`,true);}
 function updateAlignmentStatus(){$('alignment-count').textContent=`${Object.keys(alignmentPositions).length} of ${originals.length} markers · ${Object.keys(alignmentLabelPositions).length} of ${labelData.labels.length} labels corrected`;}
 function moveAlignedLabel(id,latlng){
  const row=labelData.labels.find(r=>r.id===id);if(!row)return;
@@ -241,9 +270,9 @@ async function loadMap(id,url=new URL(location.href),push=false){
   if(serial!==loadSerial)return;
   if(!Array.isArray(markers)||!Array.isArray(labels.labels)||!Array.isArray(labels.trainers)||!Array.isArray(hidden.areas))throw Error('Invalid map feature data');
   disposeLabels();hiddenController?.dispose();map?.remove();pins.clear();map=null;
-  config=next;categories={...baseCategories,...(config.extraCategories||{})};setupCategoryControls();originals=markers;labelData=labels;hiddenData=hidden;publishedPositions=new Map(originals.map(m=>[m.id,[m.x,m.y]]));publishedLabelPositions=new Map(labels.labels.map(r=>[r.id,[r.x,r.y]]));
+  config=next;categories={...allCategories,...(config.extraCategories||{})};originals=markers;labelData=labels;hiddenData=hidden;publishedPositions=new Map(originals.map(m=>[m.id,[m.x,m.y]]));publishedLabelPositions=new Map(labels.labels.map(r=>[r.id,[r.x,r.y]]));
   activePlace=null;sharedPin=null;cancelPlacement();if($('editor').open)closeEditor();$('search').value='';enabled=new Set(Object.keys(categories));showPins=true;updateCategoryButtons();
-  alignmentMode=url.searchParams.has('align');document.body.classList.toggle('aligning',alignmentMode);restoreStorage();updateTitles();
+  alignmentMode=url.searchParams.has('align');document.body.classList.toggle('aligning',alignmentMode);restoreStorage();setupCategoryControls();updateTitles();
   map=L.map('map',{crs:L.CRS.Simple,minZoom:config.minZoom,maxZoom:config.maxZoom,zoomSnap:.25,zoomDelta:.5,zoomControl:false,attributionControl:true,maxBoundsViscosity:1});
   const bounds=mapBounds();map.setMaxBounds(bounds);
   L.tileLayer(config.tilePath+'?v='+encodeURIComponent(config.tileRevision),{tileSize:config.tileSize,minZoom:config.minZoom,maxZoom:config.maxZoom,maxNativeZoom:config.maxNativeZoom,noWrap:true,bounds,keepBuffer:1,attribution:text('span',config.attribution.map).outerHTML}).on('tileerror',()=>status('A map tile could not load. Please reload.')).addTo(map);
@@ -253,11 +282,6 @@ async function loadMap(id,url=new URL(location.href),push=false){
   map.on('movestart',()=>{if(!applyingView){activePlace=null;sharedPin?.remove();sharedPin=null;}});
   map.on('moveend zoomend',()=>{updateZoom();scheduleUrl();});
   map.on('popupclose',()=>{if(!applyingView){activePlace=null;scheduleUrl();}});
-  map.on('click',e=>{
-   if(alignmentMode&&selectedAlignmentId){(selectedAlignmentKind==='label'?moveAlignedLabel:moveAlignedMarker)(selectedAlignmentId,e.latlng);return;}
-   if(!placing)return;const [x,y]=pixelsOf(e.latlng);if(!bounded(x,y)){status('Choose a position inside '+config.title+'.');return;}
-   cancelPlacement();openEditor({id:'personal-'+crypto.randomUUID(),name:'',note:'',category:'Personal',x,y,...(config.levels?{level:config.levelId}:{})});
-  });
   if(push){url.searchParams.set('map',config.id);for(const k of ['place','x','y','z','level'])url.searchParams.delete(k);url.href=url.href.split('#')[0];history.pushState({map:config.id},'',url);}
   applyLocation(url);ownView=false;updateZoom();loading=false;document.body.dataset.ready='true';syncUrl();
   if(!requested&&id)status('Unknown map; showing '+config.title+'.');
@@ -269,12 +293,19 @@ async function importNotes(file){
  if(file.size>5000000)throw Error('File exceeds 5 MB.');const data=JSON.parse(await file.text());
  if(data.tileRevision!==config.tileRevision)throw Error('These notes use another map revision. Keep the backup and reposition them on this edition.');
  if(data.version!==1||data.map!==config.id||!Array.isArray(data.markers)||!data.markers.every(valid))throw Error('Not a valid '+config.title+' field-notes file.');
- const merged=new Map(personal.map(m=>[m.id,m]));for(const m of data.markers)merged.set(m.id,{id:m.id,name:m.name.trim(),category:m.category,note:m.note,x:m.x,y:m.y,...(config.levels?{level:m.level||config.defaultLevel}:{})});
- if(merged.size>2000)throw Error('The combined notes exceed 2,000 markers.');if(persist([...merged.values()])){buildPlaceIndex();drawMarkers();status('Notes imported. Matching IDs updated; other notes kept.');}
+ const merged=new Map(personal.map(m=>[m.id,m]));for(const m of data.markers)merged.set(m.id,{id:m.id,name:m.name.trim(),category:m.category,note:m.note,x:m.x,y:m.y,...(m.noteType?{noteType:m.noteType}:{}),...(m.arrow?{arrow:m.arrow}:{}),...(m.trade?{trade:m.trade}:{}),...(config.levels?{level:m.level||config.defaultLevel}:{})});
+ if(merged.size>2000)throw Error('The combined notes exceed 2,000 markers.');if(persist([...merged.values()])){setupCategoryControls();buildPlaceIndex();drawMarkers();status('Notes imported. Matching IDs updated; other notes kept.');}
 }
 function setupCategoryControls(){
- $('categories').replaceChildren();$('category').replaceChildren();
- for(const kind of Object.keys(categories)){const b=text('button','');b.dataset.category=kind;b.setAttribute('aria-pressed','true');b.append(markerSymbol({category:kind,name:''}),text('span',kind==='Class trainer'?'Class trainers':kind));b.onclick=()=>{enabled.has(kind)?enabled.delete(kind):enabled.add(kind);updateCategoryButtons();drawMarkers();};$('categories').append(b);const option=text('option',kind);option.value=kind;$('category').append(option);}
+ // Filters list this map's categories plus any your notes use; notes may use every type.
+ const own={...baseCategories,...(config.extraCategories||{})},used=new Set(personal.map(m=>m.category));
+ const filters=Object.keys(categories).filter(k=>k!=='Personal'&&(Object.hasOwn(own,k)||used.has(k))).concat('Personal');
+ $('categories').replaceChildren();
+ for(const kind of filters){const b=text('button','');b.dataset.category=kind;b.append(markerSymbol({category:kind,name:''}),text('span',kind==='Class trainer'?'Class trainers':kind));b.onclick=()=>{enabled.has(kind)?enabled.delete(kind):enabled.add(kind);updateCategoryButtons();drawMarkers();};$('categories').append(b);}
+ updateCategoryButtons();
+ const select=$('category'),current=select.value;select.replaceChildren();
+ for(const kind of ['Personal',...Object.keys(categories).filter(k=>k!=='Personal').sort((a,b)=>a.localeCompare(b))]){const option=text('option',kind);option.value=kind;select.append(option);}
+ if(current)select.value=current;
 }
 function setupControls(){
  $('about').onclick=()=>$('about-dialog').showModal();$('close-about').onclick=()=>$('about-dialog').close();
@@ -287,11 +318,16 @@ function setupControls(){
  $('close-guide').onclick=()=>{setPanel(false);$(isEmbed?'embed-guide':'toggle-panel').focus();};
  mobileLayout.addEventListener('change',()=>setPanel(compact()?false:desktopPanelOpen));
  $('alignment-export').onclick=exportAlignment;$('alignment-restore').onclick=restoreSelectedAlignment;
- $('add').onclick=()=>{map.closePopup();placing=true;document.body.classList.add('placing');$('cancel-place').hidden=false;status('Click the map to place your personal marker.',true);if(compact())setPanel(false);};
+ $('add').onclick=startPlacement;
+ for(const tradeName of Object.keys(tradePaths).sort((a,b)=>a.localeCompare(b))){const option=text('option',tradeName);option.value=tradeName;$('trade').append(option);}
+ for(const r of document.querySelectorAll('input[name="note-type"]'))r.onchange=updateEditorFields;$('category').onchange=updateEditorFields;
  $('cancel-place').onclick=cancelPlacement;document.addEventListener('keydown',e=>{if(e.key==='Escape'){cancelPlacement();if(compact())setPanel(false);}});
  $('cancel-edit').onclick=closeEditor;$('editor').addEventListener('close',()=>draft=null);
- $('marker-form').onsubmit=e=>{e.preventDefault();if(!draft)return;const m={...draft,name:$('name').value.trim(),note:$('note').value,category:$('category').value};if(!valid(m))return;if(personal.length>=2000&&!personal.some(p=>p.id===m.id)){status('You have reached the 2,000-note limit. Export and remove older notes.');return;}if(persist([...personal.filter(p=>p.id!==m.id),m])){closeEditor();enabled.add(m.category);updateCategoryButtons();$('search').value='';buildPlaceIndex();refreshSearch();choose(m);status('Marker saved to your field notes.');}};
- $('delete').onclick=()=>{if(draft&&persist(personal.filter(p=>p.id!==draft.id))){closeEditor();buildPlaceIndex();drawMarkers();status('Personal marker deleted.');}};
+ $('marker-form').onsubmit=e=>{e.preventDefault();if(!draft)return;const type=noteTypeValue(),m={...draft,name:$('name').value.trim(),note:$('note').value,category:type==='marker'?$('category').value:'Personal'};
+  delete m.noteType;delete m.arrow;delete m.trade;
+  if(type!=='marker')m.noteType=type;if(type==='exit')m.arrow=document.querySelector('input[name="exit-arrow"]:checked')?.value||'north';if(type==='marker'&&m.category==='Tradeskill'&&$('trade').value)m.trade=$('trade').value;
+  if(!valid(m))return;if(personal.length>=2000&&!personal.some(p=>p.id===m.id)){status('You have reached the 2,000-note limit. Export and remove older notes.');return;}if(persist([...personal.filter(p=>p.id!==m.id),m])){closeEditor();cancelPlacement();enabled.add(m.category);setupCategoryControls();$('search').value='';buildPlaceIndex();refreshSearch();choose(m);status('Saved to your field notes.');}};
+ $('delete').onclick=()=>{if(draft&&persist(personal.filter(p=>p.id!==draft.id))){closeEditor();setupCategoryControls();buildPlaceIndex();drawMarkers();status('Personal note deleted.');}};
  $('export').onclick=()=>download({version:1,map:config.id,tileRevision:config.tileRevision,markers:personal},`${config.id}-field-notes.json`);
  $('import').onclick=()=>$('import-file').click();$('import-file').onchange=async e=>{try{if(e.target.files[0])await importNotes(e.target.files[0]);}catch(e){status('Import failed: '+e.message,true);}finally{$('import-file').value='';}};
  $('share').onclick=()=>copyLink();$('close-link').onclick=()=>$('link-dialog').close();
@@ -300,5 +336,5 @@ function setupControls(){
  for(const s of document.querySelectorAll('.map-select')){for(const c of registry.maps){const option=text('option',c.title);option.value=c.id;s.append(option);}s.onchange=()=>loadMap(s.value,new URL(location.href),true);}
  window.addEventListener('popstate',()=>{const url=new URL(location.href);ownView=true;loadMap(url.searchParams.get('map')||registry.defaultMap,url);});
 }
-async function init(){try{registry=validateRegistry(await fetchData('data/maps.json'));setupControls();await loadMap(new URLSearchParams(location.search).get('map')||registry.defaultMap);}catch(e){status('The atlas could not load. '+e.message,true);}}
+async function init(){try{registry=validateRegistry(await fetchData('data/maps.json'));for(const c of registry.maps)for(const extra of [c.extraCategories,...(c.levels||[]).map(l=>l.extraCategories)])for(const [k,v] of Object.entries(extra||{}))if(!Object.hasOwn(allCategories,k))allCategories[k]=v;setupControls();await loadMap(new URLSearchParams(location.search).get('map')||registry.defaultMap);}catch(e){status('The atlas could not load. '+e.message,true);}}
 init();
