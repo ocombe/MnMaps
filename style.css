@@ -122,3 +122,10 @@ dialog fieldset{border:0;padding:0;margin:13px 0 0;min-width:0}dialog legend{fon
 .update-notice{position:absolute;z-index:850;left:16px;bottom:16px;display:flex;align-items:center;gap:8px;max-width:calc(100% - 32px);padding:8px 8px 8px 14px;border:1px solid var(--amber-border);border-radius:10px;background:var(--popover);color:var(--foreground);box-shadow:var(--shadow);font-size:12px}
 .update-notice button{font-size:12px;padding:6px 12px}#update-dismiss{border:0;background:none;font-size:18px;padding:2px 6px;color:var(--muted-foreground)}
 .has-view-note .update-notice{bottom:112px}
+/* Edit positions: a bar with Cancel and Done; moved items say so in their popups. */
+.edit-bar{position:absolute;z-index:860;left:50%;bottom:16px;transform:translateX(-50%);display:flex;align-items:center;gap:8px;padding:6px 6px 6px 14px;border:1px solid var(--primary);border-radius:10px;background:var(--popover);box-shadow:var(--shadow);font-size:12px;white-space:nowrap}
+.edit-bar button{font-size:12px;padding:6px 14px}.aligning #status{bottom:72px}.aligning .update-notice{bottom:72px}
+.map-tools #edit-toggle{font-size:20px}.map-tools #edit-toggle.active{background:#5a3b22;color:#fff0cc}
+.aligning .leaflet-marker-draggable{cursor:grab}
+.journal-bottom #edit-positions{width:100%;margin-top:6px;font-size:12px}
+.leaflet-popup-content .moved-note{font-size:11px;font-style:italic;color:var(--muted-foreground);margin:6px 0 2px}

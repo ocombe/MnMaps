@@ -13,7 +13,7 @@ document.body.classList.toggle('embed',isEmbed);
 const compact=()=>isEmbed||mobileLayout.matches;
 let registry,map,config,originals=[],personal=[],pins=new Map(),placeIndex=[],hiddenController;
 let enabled=new Set(Object.keys(categories)),showPins=true,draftPin=null,draft=null,statusTimer;
-let alignmentMode=false,selectedAlignmentId=null,selectedAlignmentKind='marker',alignmentPositions={},alignmentLabelPositions={},publishedPositions=new Map(),publishedLabelPositions=new Map();
+let alignmentMode=false,editSnapshot=null,selectedAlignmentId=null,selectedAlignmentKind='marker',alignmentPositions={},alignmentLabelPositions={},publishedPositions=new Map(),publishedLabelPositions=new Map();
 let desktopPanelOpen=true,disposeLabels=()=>{},loadSerial=0,loading=false,applyingView=false,urlTimer,activePlace=null,sharedPin=null;
 const atLevel=row=>!config.levels||!row.level||row.level===config.levelId;
 const validLevel=value=>value===undefined||!!config.levels?.some(l=>l.id===value);
@@ -53,7 +53,14 @@ function refreshSearch(){$('clear-search').hidden=!$('search').value;drawMarkers
 function copyButton(place){const b=text('button','Copy link','copy-place');b.type='button';b.onclick=()=>copyLink(place);return b;}
 function switchAt(m){const destination=originals.find(row=>row.id===m.toMarker);if(destination)changeLevel(m.toLevel,{...destination,kind:'marker'});}
 const noteKind=m=>m.noteType==='label'?'Area label':m.noteType==='exit'?'Zone exit':m.category;
-function popup(m){const n=text('div','');n.append(text('div',noteKind(m)+(m.id.startsWith('personal-')?' · Your note':''),'tag'),text('h3',m.name));if(m.note)n.append(text('p',m.note));n.append(copyButton(m));if(m.toLevel){const b=text('button',m.direction==='up'?'Go up':'Go down','level-link');b.type='button';b.onclick=()=>switchAt(m);n.append(b);}if(m.id.startsWith('personal-')){const edit=text('button','Edit note');edit.onclick=()=>openEditor(m);n.append(edit);}return n;}
+function popup(m){const n=text('div','');n.append(text('div',noteKind(m)+(m.id.startsWith('personal-')?' · Your note':''),'tag'),text('h3',m.name));if(m.note)n.append(text('p',m.note));n.append(copyButton(m));if(m.toLevel){const b=text('button',m.direction==='up'?'Go up':'Go down','level-link');b.type='button';b.onclick=()=>switchAt(m);n.append(b);}if(m.id.startsWith('personal-')&&!alignmentMode){const edit=text('button','Edit note');edit.onclick=()=>openEditor(m);n.append(edit);}
+ if(alignmentPositions[m.id]){n.append(text('p','Position moved in this browser.','moved-note'));if(alignmentMode){const reset=text('button','Reset position');reset.type='button';reset.onclick=()=>resetMarker(m.id);n.append(reset);}}
+ return n;}
+function labelEditPopup(row){
+ const n=text('div','');n.append(text('div','Place name','tag'),text('h3',row.name));
+ if(alignmentLabelPositions[row.id]){n.append(text('p','Position moved in this browser.','moved-note'));const reset=text('button','Reset position');reset.type='button';reset.onclick=()=>resetLabel(row.id);n.append(reset);}
+ L.popup({autoPan:false,offset:[0,-8]}).setLatLng(locationOf(row)).setContent(n).openOn(map);
+}
 function placePopup(p){const n=text('div','');n.append(text('div',p.kind==='hidden'?'Hidden area':'Place name','tag'),text('h3',p.name));if(p.note)n.append(text('p',p.note));n.append(copyButton(p));return n;}
 function choose(m){
  if(alignmentMode&&!m.id.startsWith('personal-'))selectAlignment(m,'marker');
@@ -81,13 +88,12 @@ function drawMarkers(){
  for(const pin of pins.values())pin.remove();pins.clear();const list=$('results');list.replaceChildren();
  const matches=visibleMarkers();$('count').textContent=matches.length+' places';
  for(const m of matches){
-  const own=m.id.startsWith('personal-'),canAlign=alignmentMode&&!own;
-  const pin=L.marker(locationOf(m),{icon:pinIcon(m),alt:m.name,keyboard:true,riseOnHover:true,draggable:canAlign||own}).bindPopup(popup(m),{autoPan:false});
+  const own=m.id.startsWith('personal-');
+  const pin=L.marker(locationOf(m),{icon:pinIcon(m),alt:m.name,keyboard:true,riseOnHover:true,draggable:alignmentMode}).bindPopup(popup(m),{autoPan:false});
   pin.atlasMinZoom=m.minZoom;
   // The hover tooltip shows the name; an aria-label (not a title) keeps it accessible without a second browser tooltip.
   pin.on('add',()=>pin.getElement()?.setAttribute('aria-label',m.name));
-  pin.on('click',()=>m.switchOnClick&&!alignmentMode?switchAt(m):choose(m));if(canAlign){pin.on('dragstart',()=>selectAlignment(m,'marker'));pin.on('dragend',()=>moveAlignedMarker(m.id,pin.getLatLng()));}
-  if(own)pin.on('dragend',()=>movePersonal(m.id,pin.getLatLng()));
+  pin.on('click',()=>m.switchOnClick&&!alignmentMode?switchAt(m):choose(m));if(alignmentMode){pin.on('dragstart',()=>{map.closePopup();if(!own)selectAlignment(m,'marker');});pin.on('dragend',()=>(own?movePersonal:moveAlignedMarker)(m.id,pin.getLatLng()));}
   if(!m.noteType)pin.bindTooltip(()=>text('span',m.name),{direction:'top',offset:[0,-23]});if(showPins)pin.addTo(map);pins.set(m.id,pin);
   const b=text('button','','place'),glyph=text('span','','symbol');glyph.append(markerSymbol(m));b.append(glyph);
   const label=text('span','');label.append(text('strong',m.name),text('small',noteKind(m)+(m.id.startsWith('personal-')?' · Personal note':'')));b.append(label);b.onclick=()=>choose(m);list.append(b);
@@ -112,11 +118,37 @@ function startPlacement(){
  draftPin.on('dragend',drop);draftPin.on('click',drop);
  document.body.classList.add('placing');$('cancel-place').hidden=false;status('Drag the new note to its place, then let go.',true);if(compact())setPanel(false);
 }
+// Edit mode keeps moves in memory: Done saves them, Cancel puts back the positions from when editing began.
 function movePersonal(id,latlng){
- const m=personal.find(p=>p.id===id),point=pixelsOf(latlng);if(!m)return;
- if(!bounded(...point)){status('Choose a point inside the illustration.');drawMarkers();return;}
- if(persist(personal.map(p=>p.id===id?{...p,x:point[0],y:point[1]}:p))){buildPlaceIndex();status(`Moved ${m.name}.`);}
- drawMarkers();
+ const point=pixelsOf(latlng);
+ if(bounded(...point))personal=personal.map(p=>p.id===id?{...p,x:point[0],y:point[1]}:p);else status('Choose a point inside the illustration.');
+ buildPlaceIndex();drawMarkers();
+}
+function applyOverrides(){
+ for(const m of originals)[m.x,m.y]=alignmentPositions[m.id]||publishedPositions.get(m.id);
+ for(const row of labelData.labels)[row.x,row.y]=alignmentLabelPositions[row.id]||publishedLabelPositions.get(row.id);
+}
+function setEditing(on){
+ alignmentMode=on;selectedAlignmentId=null;selectedAlignmentKind='marker';document.body.classList.toggle('aligning',on);
+ $('edit-bar').hidden=!on;$('alignment-tools').hidden=!on;$('add').hidden=on;$('edit-positions').hidden=on;
+ const toggle=$('edit-toggle');toggle.title=on?'Finish editing positions':'Edit positions';toggle.setAttribute('aria-label',toggle.title);toggle.classList.toggle('active',on);
+ map.closePopup();disposeLabels();disposeLabels=setupPlaceLabels(labelData);drawMarkers();updateAlignmentStatus();
+}
+function enterEdit(){
+ if(alignmentMode||!map)return;cancelPlacement();
+ editSnapshot={positions:{...alignmentPositions},labels:{...alignmentLabelPositions},personal:personal.map(p=>({...p}))};
+ setEditing(true);if(compact())setPanel(false);
+}
+function saveEdits(){
+ try{localStorage.setItem(storageKey('alignment'),JSON.stringify(alignmentPositions));localStorage.setItem(storageKey('label-alignment'),JSON.stringify(alignmentLabelPositions));}
+ catch{status('Your browser could not save these positions. Free some storage and try again.',true);return false;}
+ return persist(personal);
+}
+function finishEdit(save){
+ if(!alignmentMode)return;
+ if(save){if(!saveEdits())return;}
+ else{alignmentPositions=editSnapshot.positions;alignmentLabelPositions=editSnapshot.labels;personal=editSnapshot.personal;applyOverrides();}
+ editSnapshot=null;buildPlaceIndex();setEditing(false);status(save?'Positions saved in this browser.':'Changes cancelled.');
 }
 function noteTypeValue(){return document.querySelector('input[name="note-type"]:checked')?.value||'marker';}
 function updateEditorFields(){const type=noteTypeValue();$('marker-fields').hidden=type!=='marker';$('trade-field').hidden=type!=='marker'||$('category').value!=='Tradeskill';$('exit-fields').hidden=type!=='exit';}
@@ -124,40 +156,38 @@ function openEditor(m){draft={...m};$('editor-title').textContent=personal.some(
  for(const r of document.querySelectorAll('input[name="note-type"]'))r.checked=r.value===(m.noteType||'marker');$('trade').value=m.trade||'';
  for(const r of document.querySelectorAll('input[name="exit-arrow"]'))r.checked=r.value===(m.arrow||'north');updateEditorFields();$('delete').hidden=!personal.some(p=>p.id===m.id);$('editor').showModal();$('name').focus();}
 function closeEditor(){draft=null;$('editor').close();}
-function selectAlignment(row,kind){selectedAlignmentId=row.id;selectedAlignmentKind=kind;schedulePlaceLabels();status(`Selected ${row.name}. Drag it to its correct position.`,true);}
-function updateAlignmentStatus(){$('alignment-count').textContent=`${Object.keys(alignmentPositions).length} of ${originals.length} markers · ${Object.keys(alignmentLabelPositions).length} of ${labelData.labels.length} labels corrected`;}
+function selectAlignment(row,kind){selectedAlignmentId=row.id;selectedAlignmentKind=kind;schedulePlaceLabels();}
+function updateAlignmentStatus(){$('alignment-count').textContent=`${Object.keys(alignmentPositions).length} of ${originals.length} markers · ${Object.keys(alignmentLabelPositions).length} of ${labelData.labels.length} place names moved`;}
 function moveAlignedLabel(id,latlng){
  const row=labelData.labels.find(r=>r.id===id);if(!row)return;
  const point=pixelsOf(latlng);
  if(!bounded(...point)){labelPins.get(id)?.setLatLng(locationOf(row));status('Choose a point inside the illustration.');return;}
- const next={...alignmentLabelPositions,[id]:point};
- try{localStorage.setItem(storageKey('label-alignment'),JSON.stringify(next));alignmentLabelPositions=next;}catch{labelPins.get(id)?.setLatLng(locationOf(row));status('Could not save alignment locally. Export your progress before leaving.',true);return;}
+ alignmentLabelPositions={...alignmentLabelPositions,[id]:point};
  [row.x,row.y]=point;labelPins.get(id)?.setLatLng(locationOf(row));selectAlignment(row,'label');map.closePopup();updateAlignmentStatus();buildPlaceIndex();schedulePlaceLabels();scheduleUrl();
 }
 function moveAlignedMarker(id,latlng){
- const point=pixelsOf(latlng);if(!bounded(...point)){status('Choose a point inside the illustration.');return;}
- const m=originals.find(m=>m.id===id);if(!m)return;const next={...alignmentPositions,[id]:point};
- try{localStorage.setItem(storageKey('alignment'),JSON.stringify(next));alignmentPositions=next;}catch{status('Could not save alignment locally. Export your progress before leaving.',true);return;}
- [m.x,m.y]=point;pins.get(id)?.setLatLng(locationOf(m));updateAlignmentStatus();buildPlaceIndex();schedulePlaceLabels();scheduleUrl();
+ const point=pixelsOf(latlng),m=originals.find(m=>m.id===id);if(!m)return;
+ if(bounded(...point)){alignmentPositions={...alignmentPositions,[id]:point};[m.x,m.y]=point;}else status('Choose a point inside the illustration.');
+ updateAlignmentStatus();buildPlaceIndex();drawMarkers();scheduleUrl();
 }
-function restoreSelectedAlignment(){
- if(selectedAlignmentKind==='label'){
-  const point=publishedLabelPositions.get(selectedAlignmentId),row=labelData.labels.find(r=>r.id===selectedAlignmentId);if(!point||!row)return;
-  const next={...alignmentLabelPositions};delete next[row.id];
-  try{localStorage.setItem(storageKey('label-alignment'),JSON.stringify(next));alignmentLabelPositions=next;}catch{status('Could not save the restored position.',true);return;}
-  [row.x,row.y]=point;labelPins.get(row.id)?.setLatLng(locationOf(row));map.closePopup();updateAlignmentStatus();buildPlaceIndex();schedulePlaceLabels();status(`Restored ${row.name}.`);return;
- }
- const point=publishedPositions.get(selectedAlignmentId);if(!point)return;const next={...alignmentPositions};delete next[selectedAlignmentId];
- try{localStorage.setItem(storageKey('alignment'),JSON.stringify(next));alignmentPositions=next;}catch{status('Could not save the restored position.',true);return;}
- const m=originals.find(m=>m.id===selectedAlignmentId);[m.x,m.y]=point;pins.get(m.id)?.setLatLng(locationOf(m));updateAlignmentStatus();buildPlaceIndex();status(`Restored ${m.name}.`);
+function resetMarker(id){
+ const m=originals.find(m=>m.id===id);if(!m)return;
+ const next={...alignmentPositions};delete next[id];alignmentPositions=next;[m.x,m.y]=publishedPositions.get(id);
+ map.closePopup();updateAlignmentStatus();buildPlaceIndex();drawMarkers();status(`${m.name} is back at its published position.`);
+}
+function resetLabel(id){
+ const row=labelData.labels.find(r=>r.id===id);if(!row)return;
+ const next={...alignmentLabelPositions};delete next[id];alignmentLabelPositions=next;[row.x,row.y]=publishedLabelPositions.get(id);
+ labelPins.get(id)?.setLatLng(locationOf(row));map.closePopup();updateAlignmentStatus();buildPlaceIndex();schedulePlaceLabels();status(`${row.name} is back at its published position.`);
 }
 function exportAlignment(){download({version:1,map:config.id,tileRevision:config.tileRevision,positions:alignmentPositions,labels:alignmentLabelPositions},`${config.id}-alignment.json`);}
 function restoreStorage(){
  migratePreviousStorage();
  personal=[];alignmentPositions={};alignmentLabelPositions={};selectedAlignmentId=null;selectedAlignmentKind='marker';$('legacy-notes').hidden=true;
  try{const saved=JSON.parse(localStorage.getItem(storageKey('notes'))||'[]');if(!Array.isArray(saved)||saved.length>2000||!saved.every(valid))throw Error();personal=saved.map(m=>config.levels&&!m.level?{...m,level:config.defaultLevel}:m);}catch{status('Saved notes could not be read. Import a valid backup to recover them.',true);}
- if(alignmentMode){try{const saved=JSON.parse(localStorage.getItem(storageKey('alignment'))||'{}');if(!saved||Array.isArray(saved)||typeof saved!=='object')throw Error();for(const [id,p] of Object.entries(saved))if(!originals.some(m=>m.id===id)||!Array.isArray(p)||p.length!==2||!bounded(...p,config.minZoom))throw Error();alignmentPositions=saved;for(const m of originals)if(saved[m.id])[m.x,m.y]=saved[m.id];}catch{status('Saved alignment could not be read; using published positions.',true);}}
- if(alignmentMode){try{const saved=JSON.parse(localStorage.getItem(storageKey('label-alignment'))||'{}');if(!saved||Array.isArray(saved)||typeof saved!=='object')throw Error();for(const [id,p] of Object.entries(saved))if(!publishedLabelPositions.has(id)||!Array.isArray(p)||p.length!==2||!bounded(...p,config.minZoom))throw Error();alignmentLabelPositions=saved;for(const row of labelData.labels)if(saved[row.id])[row.x,row.y]=saved[row.id];}catch{status('Saved label alignment could not be read; using published positions.',true);}}
+ // Positions moved in this browser apply everywhere; entries for markers no longer published are dropped.
+ const readMoves=(kind,published)=>{try{const saved=JSON.parse(localStorage.getItem(storageKey(kind))||'{}');if(!saved||Array.isArray(saved)||typeof saved!=='object')return {};return Object.fromEntries(Object.entries(saved).filter(([id,p])=>published.has(id)&&Array.isArray(p)&&p.length===2&&bounded(...p,config.minZoom)));}catch{return {};}};
+ alignmentPositions=readMoves('alignment',publishedPositions);alignmentLabelPositions=readMoves('label-alignment',publishedLabelPositions);applyOverrides();
  const legacy=config.legacyStorage;
  if(legacy?.notesKey){try{const saved=JSON.parse(localStorage.getItem(legacy.notesKey)||'[]');if(Array.isArray(saved)&&saved.length){$('legacy-notes').hidden=false;$('legacy-export').onclick=()=>download({version:1,map:config.id,tileRevision:legacy.notesRevision,markers:saved},`${config.id}-${legacy.notesRevision}-field-notes.json`);}}catch{}}
 }
@@ -173,7 +203,7 @@ function buildPlaceIndex(){
 }
 function findPlace(value){buildPlaceIndex();const p=placeIndex.find(p=>p.id===value)||placeIndex.find(p=>p.slug===value||slug(p.name)===value);return p?.labelId?placeIndex.find(row=>row.id===p.labelId)||p:p;}
 function viewUrl(place=activePlace){
- const url=new URL(location.href),c=map.project(map.getCenter(),config.coordinateZoom);url.href=url.href.split('#')[0];url.searchParams.set('map',config.id);
+ const url=new URL(location.href),c=map.project(map.getCenter(),config.coordinateZoom);url.href=url.href.split('#')[0];url.searchParams.set('map',config.id);url.searchParams.delete('align');
  if(config.levels)url.searchParams.set('level',config.levelId);else url.searchParams.delete('level');
  url.searchParams.set('x',String(Math.round(Math.max(0,Math.min(config.width,c.x))*100)/100));url.searchParams.set('y',String(Math.round(Math.max(0,Math.min(config.height,c.y))*100)/100));url.searchParams.set('z',String(map.getZoom()));
  if(place&&!place.id.startsWith('personal-'))url.searchParams.set('place',place.id);else url.searchParams.delete('place');
@@ -269,21 +299,22 @@ async function loadMap(id,url=new URL(location.href),push=false){
    next.hiddenAreasFile===base.hiddenAreasFile?hidden:fetchData(next.hiddenAreasFile,{areas:[],routes:[]})]);
   if(serial!==loadSerial)return;
   if(!Array.isArray(markers)||!Array.isArray(labels.labels)||!Array.isArray(labels.trainers)||!Array.isArray(hidden.areas))throw Error('Invalid map feature data');
+  const keepEditing=alignmentMode||(!map&&url.searchParams.has('align'));if(alignmentMode)saveEdits();alignmentMode=false;editSnapshot=null;
   disposeLabels();hiddenController?.dispose();map?.remove();pins.clear();map=null;
   config=next;categories={...allCategories,...(config.extraCategories||{})};originals=markers;labelData=labels;hiddenData=hidden;publishedPositions=new Map(originals.map(m=>[m.id,[m.x,m.y]]));publishedLabelPositions=new Map(labels.labels.map(r=>[r.id,[r.x,r.y]]));
   activePlace=null;sharedPin=null;cancelPlacement();if($('editor').open)closeEditor();$('search').value='';enabled=new Set(Object.keys(categories));showPins=true;updateCategoryButtons();
-  alignmentMode=url.searchParams.has('align');document.body.classList.toggle('aligning',alignmentMode);restoreStorage();setupCategoryControls();updateTitles();
+  document.body.classList.remove('aligning');$('edit-bar').hidden=true;restoreStorage();setupCategoryControls();updateTitles();
   map=L.map('map',{crs:L.CRS.Simple,minZoom:config.minZoom,maxZoom:config.maxZoom,zoomSnap:.25,zoomDelta:.5,zoomControl:false,attributionControl:true,maxBoundsViscosity:1});
   const bounds=mapBounds();map.setMaxBounds(bounds);
   L.tileLayer(config.tilePath+'?v='+encodeURIComponent(config.tileRevision),{tileSize:config.tileSize,minZoom:config.minZoom,maxZoom:config.maxZoom,maxNativeZoom:config.maxNativeZoom,noWrap:true,bounds,keepBuffer:1,attribution:text('span',config.attribution.map).outerHTML}).on('tileerror',()=>status('A map tile could not load. Please reload.')).addTo(map);
   const currentHidden={...hiddenData};for(const key of ['areas','additionalAreas','routes','connections','destinations','levelStacks'])if(Array.isArray(hiddenData[key]))currentHidden[key]=hiddenData[key].filter(atLevel);
   fitMap();disposeLabels=setupPlaceLabels(labelData);hiddenController=setupHiddenAreas(map,config,currentHidden);
-  buildPlaceIndex();refreshSearch();setPanel(!compact()&&desktopPanelOpen);$('hidden-controls').hidden=!config.hiddenAreasFile||!(currentHidden.areas.length||(currentHidden.additionalAreas||[]).length);$('alignment-tools').hidden=!alignmentMode;$('add').hidden=alignmentMode;updateAlignmentStatus();
+  buildPlaceIndex();refreshSearch();setPanel(!compact()&&desktopPanelOpen);$('hidden-controls').hidden=!config.hiddenAreasFile||!(currentHidden.areas.length||(currentHidden.additionalAreas||[]).length);$('alignment-tools').hidden=true;$('add').hidden=false;$('edit-positions').hidden=false;updateAlignmentStatus();
   map.on('movestart',()=>{if(!applyingView){activePlace=null;sharedPin?.remove();sharedPin=null;}});
   map.on('moveend zoomend',()=>{updateZoom();scheduleUrl();});
   map.on('popupclose',()=>{if(!applyingView){activePlace=null;scheduleUrl();}});
   if(push){url.searchParams.set('map',config.id);for(const k of ['place','x','y','z','level'])url.searchParams.delete(k);url.href=url.href.split('#')[0];history.pushState({map:config.id},'',url);}
-  applyLocation(url);ownView=false;updateZoom();loading=false;document.body.dataset.ready='true';syncUrl();
+  applyLocation(url);ownView=false;updateZoom();if(keepEditing)enterEdit();loading=false;document.body.dataset.ready='true';syncUrl();
   if(!requested&&id)status('Unknown map; showing '+config.title+'.');
  }catch(e){if(serial!==loadSerial)return;loading=false;document.body.dataset.ready=map?'true':'false';status('The atlas could not load. '+e.message,true);if(map)syncUrl();}
  finally{if(serial===loadSerial)for(const s of document.querySelectorAll('.map-select')){s.disabled=false;if(config)s.value=config.id;}}
@@ -317,7 +348,8 @@ function setupControls(){
  for(const id of ['toggle-panel','embed-guide'])$(id).onclick=()=>setPanel($('journal').classList.contains('closed'));
  $('close-guide').onclick=()=>{setPanel(false);$(isEmbed?'embed-guide':'toggle-panel').focus();};
  mobileLayout.addEventListener('change',()=>setPanel(compact()?false:desktopPanelOpen));
- $('alignment-export').onclick=exportAlignment;$('alignment-restore').onclick=restoreSelectedAlignment;
+ $('alignment-export').onclick=exportAlignment;
+ $('edit-toggle').onclick=()=>alignmentMode?finishEdit(true):enterEdit();$('edit-positions').onclick=enterEdit;$('edit-done').onclick=()=>finishEdit(true);$('edit-cancel').onclick=()=>finishEdit(false);
  $('add').onclick=startPlacement;
  for(const tradeName of Object.keys(tradePaths).sort((a,b)=>a.localeCompare(b))){const option=text('option',tradeName);option.value=tradeName;$('trade').append(option);}
  for(const r of document.querySelectorAll('input[name="note-type"]'))r.onchange=updateEditorFields;$('category').onchange=updateEditorFields;
