@@ -4,7 +4,7 @@ const $=id=>document.getElementById(id);
 const text=(tag,value,cls)=>{const n=document.createElement(tag);n.textContent=value;if(cls)n.className=cls;return n;};
 const baseCategories={'Bank':['▣','#916c30'],'Inn':['☾','#9a543a'],'Stable':['♞','#665e3e'],'Shady merchant':['♧','#785268'],'Tradeskill':['⚒','#385f60'],'Class trainer':['◈','#4e4668'],'Personal':['✧','#a04438']};
 // Note-only types; a map's own extraCategories override these colours and glyphs.
-const noteCategories={'Quest':['!','#b5861f'],'Mob camp':['☠','#6e2f2a'],'Vendor':['◇','#876036']};
+const noteCategories={'Quest':['!','#b5861f'],'Mob camp':['⚔','#7a3328'],'Named mob':['☠','#46404f'],'Vendor':['◇','#876036'],'Herbs':['✿','#4f7a3a'],'Wood':['♣','#6b4f2e'],'Ore':['⛏','#55606b']};
 let categories={...baseCategories},allCategories={...baseCategories,...noteCategories};
 const mobileLayout=matchMedia('(max-width: 760px)');
 let embedded=false;try{embedded=window.self!==window.top;}catch{embedded=true;}
@@ -44,7 +44,7 @@ function status(message,sticky=false){clearTimeout(statusTimer);$('status').text
 function locationOf(m){return map.unproject([m.x,m.y],config.coordinateZoom);}
 function pixelsOf(latlng){const p=map.project(latlng,config.coordinateZoom);return [Math.round(p.x),Math.round(p.y)];}
 function bounded(x,y,z=map.getZoom()){return Number.isFinite(x)&&Number.isFinite(y)&&Number.isFinite(z)&&x>=0&&y>=0&&x<=config.width&&y<=config.height&&z>=config.minZoom&&z<=config.maxZoom;}
-function valid(m){return m&&validLevel(m.level)&&typeof m.id==='string'&&/^personal-[a-zA-Z0-9-]{1,80}$/.test(m.id)&&typeof m.name==='string'&&m.name.trim()&&m.name.length<=100&&typeof m.note==='string'&&m.note.length<=2000&&Object.hasOwn(categories,m.category)&&[undefined,'label','exit'].includes(m.noteType)&&(m.arrow===undefined||Object.hasOwn(exitArrows,m.arrow))&&(m.trade===undefined||Object.hasOwn(tradePaths,m.trade))&&Number.isFinite(m.x)&&m.x>=0&&m.x<=config.width&&Number.isFinite(m.y)&&m.y>=0&&m.y<=config.height;}
+function valid(m){return m&&validLevel(m.level)&&typeof m.id==='string'&&/^personal-[a-zA-Z0-9-]{1,80}$/.test(m.id)&&typeof m.name==='string'&&m.name.trim()&&m.name.length<=100&&typeof m.note==='string'&&m.note.length<=2000&&Object.hasOwn(categories,m.category)&&[undefined,'label','exit'].includes(m.noteType)&&(m.arrow===undefined||Object.hasOwn(exitArrows,m.arrow))&&(m.trade===undefined||Object.hasOwn(tradePaths,m.trade))&&(m.color===undefined||Object.values(pinColours).includes(m.color))&&Number.isFinite(m.x)&&m.x>=0&&m.x<=config.width&&Number.isFinite(m.y)&&m.y>=0&&m.y<=config.height;}
 function persist(next){try{localStorage.setItem(storageKey('notes'),JSON.stringify(next));personal=next;return true;}catch{status('Your browser could not save this change. Free some storage and try again.',true);return false;}}
 function download(data,name){const url=URL.createObjectURL(new Blob([JSON.stringify(data,null,2)],{type:'application/json'})),a=text('a','');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}
 function allMarkers(){return [...originals,...personal];}
@@ -81,7 +81,7 @@ function pinIcon(m){
  // Personal area labels and zone exits are lettering, drawn like the map's own names.
  if(m.noteType)return L.divIcon({className:'personal-label-anchor',html:text('span',(m.noteType==='exit'?(exitArrows[m.arrow]||'→')+' ':'')+m.name,'personal-label '+(m.noteType==='exit'?'exit':'district')),iconSize:[0,0],iconAnchor:[0,0],popupAnchor:[0,-12]});
  if(m.category==='Class trainer')return trainerIcon(m);
- const face=text('span','');face.style.setProperty('--pin',categories[m.category][1]);face.append(markerSymbol(m));
+ const face=text('span','');face.style.setProperty('--pin',m.color||categories[m.category][1]);face.append(markerSymbol(m));
  return L.divIcon({className:'pin',html:face,iconSize:[25,25],iconAnchor:[12,25],popupAnchor:[0,-23]});
 }
 function drawMarkers(){
@@ -151,10 +151,11 @@ function finishEdit(save){
  editSnapshot=null;buildPlaceIndex();setEditing(false);status(save?'Positions saved in this browser.':'Changes cancelled.');
 }
 function noteTypeValue(){return document.querySelector('input[name="note-type"]:checked')?.value||'marker';}
-function updateEditorFields(){const type=noteTypeValue();$('marker-fields').hidden=type!=='marker';$('trade-field').hidden=type!=='marker'||$('category').value!=='Tradeskill';$('exit-fields').hidden=type!=='exit';}
+function updateEditorFields(){const type=noteTypeValue();$('default-colour').style.setProperty('--swatch',categories[$('category').value]?.[1]||'#a04438');$('marker-fields').hidden=type!=='marker';$('trade-field').hidden=type!=='marker'||$('category').value!=='Tradeskill';$('exit-fields').hidden=type!=='exit';}
 function openEditor(m){draft={...m};$('editor-title').textContent=personal.some(p=>p.id===m.id)?'Your discovery':'A new discovery';$('name').value=m.name;$('category').value=m.category;$('note').value=m.note;
  for(const r of document.querySelectorAll('input[name="note-type"]'))r.checked=r.value===(m.noteType||'marker');$('trade').value=m.trade||'';
- for(const r of document.querySelectorAll('input[name="exit-arrow"]'))r.checked=r.value===(m.arrow||'north');updateEditorFields();$('delete').hidden=!personal.some(p=>p.id===m.id);$('editor').showModal();$('name').focus();}
+ for(const r of document.querySelectorAll('input[name="exit-arrow"]'))r.checked=r.value===(m.arrow||'north');
+ for(const r of document.querySelectorAll('input[name="pin-colour"]'))r.checked=r.value===(m.color||'');updateEditorFields();$('delete').hidden=!personal.some(p=>p.id===m.id);$('editor').showModal();$('name').focus();}
 function closeEditor(){draft=null;$('editor').close();}
 function selectAlignment(row,kind){selectedAlignmentId=row.id;selectedAlignmentKind=kind;schedulePlaceLabels();}
 function updateAlignmentStatus(){$('alignment-count').textContent=`${Object.keys(alignmentPositions).length} of ${originals.length} markers · ${Object.keys(alignmentLabelPositions).length} of ${labelData.labels.length} place names moved`;}
@@ -324,7 +325,7 @@ async function importNotes(file){
  if(file.size>5000000)throw Error('File exceeds 5 MB.');const data=JSON.parse(await file.text());
  if(data.tileRevision!==config.tileRevision)throw Error('These notes use another map revision. Keep the backup and reposition them on this edition.');
  if(data.version!==1||data.map!==config.id||!Array.isArray(data.markers)||!data.markers.every(valid))throw Error('Not a valid '+config.title+' field-notes file.');
- const merged=new Map(personal.map(m=>[m.id,m]));for(const m of data.markers)merged.set(m.id,{id:m.id,name:m.name.trim(),category:m.category,note:m.note,x:m.x,y:m.y,...(m.noteType?{noteType:m.noteType}:{}),...(m.arrow?{arrow:m.arrow}:{}),...(m.trade?{trade:m.trade}:{}),...(config.levels?{level:m.level||config.defaultLevel}:{})});
+ const merged=new Map(personal.map(m=>[m.id,m]));for(const m of data.markers)merged.set(m.id,{id:m.id,name:m.name.trim(),category:m.category,note:m.note,x:m.x,y:m.y,...(m.noteType?{noteType:m.noteType}:{}),...(m.arrow?{arrow:m.arrow}:{}),...(m.trade?{trade:m.trade}:{}),...(m.color?{color:m.color}:{}),...(config.levels?{level:m.level||config.defaultLevel}:{})});
  if(merged.size>2000)throw Error('The combined notes exceed 2,000 markers.');if(persist([...merged.values()])){setupCategoryControls();buildPlaceIndex();drawMarkers();status('Notes imported. Matching IDs updated; other notes kept.');}
 }
 function setupCategoryControls(){
@@ -351,13 +352,15 @@ function setupControls(){
  $('alignment-export').onclick=exportAlignment;
  $('edit-toggle').onclick=()=>alignmentMode?finishEdit(true):enterEdit();$('edit-positions').onclick=enterEdit;$('edit-done').onclick=()=>finishEdit(true);$('edit-cancel').onclick=()=>finishEdit(false);
  $('add').onclick=startPlacement;
+ for(const [name,hex] of Object.entries(pinColours)){const label=text('label','');label.title=name;const input=text('input','');input.type='radio';input.name='pin-colour';input.value=hex;input.setAttribute('aria-label',name);const swatch=text('span','');swatch.style.setProperty('--swatch',hex);label.append(input,swatch);$('colour-swatches').append(label);}
  for(const tradeName of Object.keys(tradePaths).sort((a,b)=>a.localeCompare(b))){const option=text('option',tradeName);option.value=tradeName;$('trade').append(option);}
  for(const r of document.querySelectorAll('input[name="note-type"]'))r.onchange=updateEditorFields;$('category').onchange=updateEditorFields;
  $('cancel-place').onclick=cancelPlacement;document.addEventListener('keydown',e=>{if(e.key==='Escape'){cancelPlacement();if(compact())setPanel(false);}});
  $('cancel-edit').onclick=closeEditor;$('editor').addEventListener('close',()=>draft=null);
  $('marker-form').onsubmit=e=>{e.preventDefault();if(!draft)return;const type=noteTypeValue(),m={...draft,name:$('name').value.trim(),note:$('note').value,category:type==='marker'?$('category').value:'Personal'};
-  delete m.noteType;delete m.arrow;delete m.trade;
+  delete m.noteType;delete m.arrow;delete m.trade;delete m.color;
   if(type!=='marker')m.noteType=type;if(type==='exit')m.arrow=document.querySelector('input[name="exit-arrow"]:checked')?.value||'north';if(type==='marker'&&m.category==='Tradeskill'&&$('trade').value)m.trade=$('trade').value;
+  const colour=document.querySelector('input[name="pin-colour"]:checked')?.value;if(type==='marker'&&colour&&m.category!=='Class trainer')m.color=colour;
   if(!valid(m))return;if(personal.length>=2000&&!personal.some(p=>p.id===m.id)){status('You have reached the 2,000-note limit. Export and remove older notes.');return;}if(persist([...personal.filter(p=>p.id!==m.id),m])){closeEditor();cancelPlacement();enabled.add(m.category);setupCategoryControls();$('search').value='';buildPlaceIndex();refreshSearch();choose(m);status('Saved to your field notes.');}};
  $('delete').onclick=()=>{if(draft&&persist(personal.filter(p=>p.id!==draft.id))){closeEditor();setupCategoryControls();buildPlaceIndex();drawMarkers();status('Personal note deleted.');}};
  $('export').onclick=()=>download({version:1,map:config.id,tileRevision:config.tileRevision,markers:personal},`${config.id}-field-notes.json`);

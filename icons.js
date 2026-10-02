@@ -38,9 +38,14 @@ const categoryPaths = {
   'Inn': 'M2 4v18 M2 17h20v5 M2 10h7v7 M9 8h9q4 0 4 4v5 M4 12h3v3H4z',
   'Shady merchant': 'M2 8c6 3 14 3 20 0l-2 9-5 2-3-4-3 4-5-2z M5 12l4 1m6 0 4-1',
   'Quest': 'M8 3h11a2 2 0 0 1 0 4h-2 M8 3a2 2 0 0 0-2 2v12 M17 7v12a2 2 0 0 1-2 2H5a2 2 0 0 1 0-4h9 M11.5 8.5v4.5 M11.5 16v.01',
-  'Mob camp': 'M12 3c-5 0-8 3.2-8 7.5 0 2.5 1.2 4 3 5V19h10v-3.5c1.8-1 3-2.5 3-5C20 6.2 17 3 12 3z M10.5 10.5a1.5 1.5 0 1 0-3 0 1.5 1.5 0 1 0 3 0 M16.5 10.5a1.5 1.5 0 1 0-3 0 1.5 1.5 0 1 0 3 0 M12 13l-1 2h2z M10 19v2.5h4V19 M12 19v2.5',
+  'Mob camp': 'M4 4l11 11 M12.5 17.5l5-5 M15 15l4.5 4.5 M20 4 9 15 M6.5 12.5l5 5 M9 15l-4.5 4.5',
+  'Named mob': 'M12 3c-5 0-8 3.2-8 7.5 0 2.5 1.2 4 3 5V19h10v-3.5c1.8-1 3-2.5 3-5C20 6.2 17 3 12 3z M10.5 10.5a1.5 1.5 0 1 0-3 0 1.5 1.5 0 1 0 3 0 M16.5 10.5a1.5 1.5 0 1 0-3 0 1.5 1.5 0 1 0 3 0 M12 13l-1 2h2z M10 19v2.5h4V19 M12 19v2.5',
   'Vendor': 'M3 9l2-5h14l2 5 M3 9a3 3 0 0 0 6 0 3 3 0 0 0 6 0 3 3 0 0 0 6 0 M9 4 8 9 M15 4l1 5 M5 11v10 M19 11v10 M5 15h14 M3 21h18'
 };
+// Resource nodes reuse the matching trade pictograms in their own colours.
+Object.assign(categoryPaths,{'Herbs':tradePaths['Herbalism'],'Wood':tradePaths['Lumberjacking'],'Ore':tradePaths['Mining']});
+// A small palette personal markers may use instead of their category colour.
+const pinColours={Red:'#a04438',Amber:'#b5861f',Green:'#4f7a3a',Teal:'#385f60',Blue:'#2f6f9a',Purple:'#6a4a7a',Brown:'#6b4f2e',Slate:'#4d5560'};
 const exitArrows={north:'↑',northeast:'↗',east:'→',southeast:'↘',south:'↓',southwest:'↙',west:'←',northwest:'↖'};
 function tradeskillName(marker){return marker.category==='Tradeskill'?marker.name.split(/\s+[—–-]\s+/)[0].trim():'';}
 function markerSymbol(marker){

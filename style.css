@@ -129,3 +129,8 @@ dialog fieldset{border:0;padding:0;margin:13px 0 0;min-width:0}dialog legend{fon
 .aligning .leaflet-marker-draggable{cursor:grab}
 .journal-bottom #edit-positions{width:100%;margin-top:6px;font-size:12px}
 .leaflet-popup-content .moved-note{font-size:11px;font-style:italic;color:var(--muted-foreground);margin:6px 0 2px}
+/* Pin colour swatches for personal markers; the first keeps the category colour. */
+#colour-swatches{display:flex;flex-wrap:wrap;gap:6px}.pin-colours label{margin:0;position:relative}.pin-colours input{position:absolute;opacity:0;width:1px;height:1px}
+.pin-colours span{display:block;width:28px;height:28px;border-radius:50%;background:var(--swatch);border:2px solid #f5e2b4;cursor:pointer;box-shadow:0 0 0 1px var(--border)}
+.pin-colours span.default{border-style:dashed}
+.pin-colours input:checked+span{box-shadow:0 0 0 2px var(--background),0 0 0 4px var(--primary)}.pin-colours input:focus-visible+span{outline:2px solid var(--primary);outline-offset:3px}
