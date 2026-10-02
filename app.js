@@ -324,8 +324,44 @@ async function loadMap(id,url=new URL(location.href),push=false){
  finally{if(serial===loadSerial)for(const s of document.querySelectorAll('.map-select')){s.disabled=false;if(config)s.value=config.id;}}
 }
 function updateZoom(){$('zoom-label').textContent=Math.round(2**(map.getZoom()-config.coordinateZoom)*100)+'% · '+config.title;$('zoom-in').disabled=map.getZoom()>=config.maxZoom;$('zoom-out').disabled=map.getZoom()<=config.minZoom;}
+// Saved data handed over from the atlas's previous address, by its moved page or as a downloaded file.
+// Existing entries win; notes merge by id and moved positions merge by marker.
+const previousOrigin='https://ocombe.github.io';
+function mergeBrowserData(items){
+ if(!items||typeof items!=='object'||Array.isArray(items))throw Error('Not a valid data file.');
+ let changed=0;
+ for(const [key,value] of Object.entries(items)){
+  if(!/^mnmaps-[a-zA-Z0-9-]{1,120}$/.test(key)||typeof value!=='string'||value.length>5000000)continue;
+  const current=localStorage.getItem(key);let next=value;
+  if(current!==null){
+   try{
+    const mine=JSON.parse(current),theirs=JSON.parse(value);
+    if(Array.isArray(mine)&&Array.isArray(theirs)){const merged=new Map(theirs.map(m=>[m?.id,m]));for(const m of mine)merged.set(m?.id,m);next=JSON.stringify([...merged.values()]);}
+    else if(mine&&theirs&&typeof mine==='object'&&typeof theirs==='object')next=JSON.stringify({...theirs,...mine});
+    else continue;
+   }catch{continue;}
+  }
+  if(next!==current){localStorage.setItem(key,next);changed++;}
+ }
+ return changed;
+}
+async function receiveBrowserData(items){
+ const changed=mergeBrowserData(items);
+ if(changed){const url=new URL(location.href);ownView=true;await loadMap(config.id,url);}
+ status(changed?'Your notes and positions from the previous address are now here.':'Nothing new to bring over; your data was already here.',true);
+ return changed;
+}
+function watchForHandover(){
+ window.addEventListener('message',async e=>{
+  if(e.origin!==previousOrigin||e.data?.type!=='mnmaps-data')return;
+  try{const changed=await receiveBrowserData(e.data.items);e.source?.postMessage({type:'mnmaps-received',changed},previousOrigin);}
+  catch{status('Your data could not be brought over. Use Download my data on the previous address, then Import notes here.',true);}
+ });
+ try{window.opener?.postMessage({type:'mnmaps-ready'},previousOrigin);}catch{}
+}
 async function importNotes(file){
  if(file.size>5000000)throw Error('File exceeds 5 MB.');const data=JSON.parse(await file.text());
+ if(data.type==='mnmaps-browser-data'&&data.version===1){await receiveBrowserData(data.items);return;}
  if(data.tileRevision!==config.tileRevision)throw Error('These notes use another map revision. Keep the backup and reposition them on this edition.');
  if(data.version!==1||data.map!==config.id||!Array.isArray(data.markers)||!data.markers.every(valid))throw Error('Not a valid '+config.title+' field-notes file.');
  const merged=new Map(personal.map(m=>[m.id,m]));for(const m of data.markers)merged.set(m.id,{id:m.id,name:m.name.trim(),category:m.category,note:m.note,x:m.x,y:m.y,...(m.noteType?{noteType:m.noteType}:{}),...(m.arrow?{arrow:m.arrow}:{}),...(m.trade?{trade:m.trade}:{}),...(m.color?{color:m.color}:{}),...(config.levels?{level:m.level||config.defaultLevel}:{})});
@@ -385,5 +421,5 @@ function watchForUpdates(){
  const due=()=>Date.now()-updateCheckedAt>=updateInterval&&checkForUpdate();
  checkForUpdate();setInterval(due,60000);document.addEventListener('visibilitychange',due);
 }
-async function init(){try{registry=validateRegistry(await fetchData('data/maps.json'));for(const c of registry.maps)for(const extra of [c.extraCategories,...(c.levels||[]).map(l=>l.extraCategories)])for(const [k,v] of Object.entries(extra||{}))if(!Object.hasOwn(allCategories,k))allCategories[k]=v;setupControls();watchForUpdates();await loadMap(new URLSearchParams(location.search).get('map')||registry.defaultMap);}catch(e){status('The atlas could not load. '+e.message,true);}}
+async function init(){try{registry=validateRegistry(await fetchData('data/maps.json'));for(const c of registry.maps)for(const extra of [c.extraCategories,...(c.levels||[]).map(l=>l.extraCategories)])for(const [k,v] of Object.entries(extra||{}))if(!Object.hasOwn(allCategories,k))allCategories[k]=v;setupControls();watchForUpdates();await loadMap(new URLSearchParams(location.search).get('map')||registry.defaultMap);watchForHandover();}catch(e){status('The atlas could not load. '+e.message,true);}}
 document.addEventListener('DOMContentLoaded',init,{once:true});
