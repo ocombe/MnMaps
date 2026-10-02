@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+<head>
+ <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+ <meta name="theme-color" content="#16120e"><meta name="robots" content="noindex">
+ <title>MnMaps has moved to mnmatlas.com</title>
+ <link rel="canonical" href="https://mnmatlas.com/">
+ <style>
+  :root{--background:hsl(30 22% 7%);--card:hsl(28 24% 11%);--muted:hsl(28 18% 15%);--border:hsl(28 18% 21%);--foreground:hsl(41 37% 86%);--muted-foreground:hsl(36 24% 72%);--primary:hsl(32 63% 50%)}
+  *{box-sizing:border-box}html,body{height:100%}body{margin:0;display:grid;place-items:center;padding:16px;background:var(--background);color:var(--foreground);font:14px/1.6 system-ui,-apple-system,'Segoe UI',Arial,sans-serif}
+  main{width:min(460px,100%);background:var(--card);border:1px solid rgba(208,133,47,.25);border-radius:16px;padding:26px;box-shadow:0 8px 32px rgba(13,10,8,.4)}
+  .eyebrow{font-size:10px;letter-spacing:1.6px;color:var(--primary);margin:0 0 6px}h1{font:normal 30px/1.15 'IM Fell English',Georgia,'Times New Roman',serif;margin:0 0 14px}
+  p{margin:0 0 12px;color:var(--muted-foreground)}a{color:var(--primary)}
+  .actions{display:grid;gap:8px;margin-top:18px}button{font:inherit;font-size:13px;color:var(--foreground);border:1px solid var(--border);background:var(--muted);border-radius:8px;padding:11px 14px;cursor:pointer}
+  button:hover{border-color:#936133}button.primary{background:var(--primary);border-color:var(--primary);color:#1e140b;font-weight:600}button:disabled{opacity:.5;cursor:default}
+  button:focus-visible,a:focus-visible{outline:2px solid var(--primary);outline-offset:3px}#result{min-height:1.6em;color:var(--foreground)}
+ </style>
+</head>
+<body>
+ <main id="moved" hidden>
+  <p class="eyebrow">MNMAPS · COMMUNITY ATLAS</p>
+  <h1>The atlas has moved</h1>
+  <p>MnMaps now lives at <a id="new-link" href="https://mnmatlas.com/">mnmatlas.com</a>. Please update your bookmarks.</p>
+  <p>Your personal notes and moved positions are saved in this browser under the old address. Bring them along before you go.</p>
+  <div class="actions">
+   <button id="move" class="primary" type="button">Move my data and continue</button>
+   <button id="download" type="button">Download my data</button>
+   <button id="skip" type="button">Continue without my data</button>
+  </div>
+  <p id="result" role="status" aria-live="polite"></p>
+  <p>A downloaded file can be loaded on the new site with <strong>Import notes</strong>. Your data also stays here.</p>
+ </main>
+ <noscript><p>MnMaps has moved to <a href="https://mnmatlas.com/">mnmatlas.com</a>.</p></noscript>
+ <script>
+ 'use strict';
+ (()=>{
+  const origin='https://mnmatlas.com',target=new URL(origin+'/');target.search=location.search;target.hash=location.hash;
+  let framed=false;try{framed=window.self!==window.top;}catch{framed=true;}
+  const items={};try{for(const key of Object.keys(localStorage))if(key.startsWith('mnmaps-'))items[key]=localStorage.getItem(key);}catch{}
+  // Only notes and moved positions are worth a stop here; preferences alone are not.
+  const worthMoving=Object.values(items).some(value=>{try{const v=JSON.parse(value);return Array.isArray(v)?v.length>0:!!v&&typeof v==='object'&&Object.keys(v).length>0;}catch{return false;}});
+  if(framed||!worthMoving){location.replace(target.href);return;}
+  const $=id=>document.getElementById(id),say=text=>{$('result').textContent=text;};
+  $('new-link').href=target.href;$('moved').hidden=false;
+  $('skip').onclick=()=>location.assign(target.href);
+  $('download').onclick=()=>{
+   const blob=new Blob([JSON.stringify({type:'mnmaps-browser-data',version:1,exported:new Date().toISOString(),items},null,2)],{type:'application/json'});
+   const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='mnmaps-data.json';document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
+   say('Saved mnmaps-data.json. On mnmatlas.com, open the field guide and use Import notes.');
+  };
+  let opened=null,timer;
+  window.addEventListener('message',e=>{
+   if(e.origin!==origin||!opened||e.source!==opened)return;
+   if(e.data?.type==='mnmaps-ready')opened.postMessage({type:'mnmaps-data',items},origin);
+   if(e.data?.type==='mnmaps-received'){clearTimeout(timer);$('move').disabled=false;say('Done. Your notes and positions are on mnmatlas.com, in the tab that just opened. You can close this one.');}
+  });
+  $('move').onclick=()=>{
+   opened=window.open(target.href,'_blank');
+   if(!opened){say('Your browser blocked the new tab. Allow pop-ups for this page, or use Download my data.');return;}
+   $('move').disabled=true;say('Opening mnmatlas.com and handing your data over…');
+   clearTimeout(timer);timer=setTimeout(()=>{$('move').disabled=false;say('The new site did not answer. Use Download my data, then Import notes on mnmatlas.com.');},30000);
+  };
+ })();
+ </script>
+</body>
+</html>
