@@ -4,6 +4,7 @@ let atlasLabels,trainerDetails=new Map(),labelPins=new Map(),schedulePlaceLabels
 function trainerIcon(m){
  const detail=trainerDetails.get(m.id);
  const face=text('span',detail?detail.abbreviations.join(' · '):'CLASS','trainer-badge');
+ if(m.color)face.style.backgroundColor=m.color;
  const width=Math.max(40,face.textContent.length*6.7+14);
  const body=text('div','','trainer-body');body.append(text('i','','trainer-leader'),face);
  return L.divIcon({className:'trainer-pin',html:body,iconSize:[width,25],iconAnchor:[width/2,32],popupAnchor:[0,-30]});

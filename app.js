@@ -3,7 +3,7 @@
 const $=id=>document.getElementById(id);
 const text=(tag,value,cls)=>{const n=document.createElement(tag);n.textContent=value;if(cls)n.className=cls;return n;};
 const baseCategories={'Bank':['▣','#916c30'],'Inn':['☾','#9a543a'],'Stable':['♞','#665e3e'],'Shady merchant':['♧','#785268'],'Tradeskill':['⚒','#385f60'],'Class trainer':['◈','#4e4668'],'Personal':['✧','#a04438']};
-// Note-only types; a map's own extraCategories override these colours and glyphs.
+// Additional marker types; a map's own extraCategories override these colours and glyphs.
 const noteCategories={'Quest':['!','#b5861f'],'Mob camp':['⚔','#7a3328'],'Named mob':['☠','#46404f'],'Vendor':['◇','#876036'],'Herbs':['✿','#4f7a3a'],'Wood':['♣','#6b4f2e'],'Ore':['⛏','#55606b']};
 let categories={...baseCategories},allCategories={...baseCategories,...noteCategories};
 const mobileLayout=matchMedia('(max-width: 760px)');
@@ -45,7 +45,7 @@ function locationOf(m){return map.unproject([m.x,m.y],config.coordinateZoom);}
 function pixelsOf(latlng){const p=map.project(latlng,config.coordinateZoom);return [Math.round(p.x),Math.round(p.y)];}
 function bounded(x,y,z=map.getZoom()){return Number.isFinite(x)&&Number.isFinite(y)&&Number.isFinite(z)&&x>=0&&y>=0&&x<=config.width&&y<=config.height&&z>=config.minZoom&&z<=config.maxZoom;}
 function valid(m){return m&&validLevel(m.level)&&typeof m.id==='string'&&/^personal-[a-zA-Z0-9-]{1,80}$/.test(m.id)&&typeof m.name==='string'&&m.name.trim()&&m.name.length<=100&&typeof m.note==='string'&&m.note.length<=2000&&Object.hasOwn(categories,m.category)&&[undefined,'label','exit'].includes(m.noteType)&&(m.arrow===undefined||Object.hasOwn(exitArrows,m.arrow))&&(m.trade===undefined||Object.hasOwn(tradePaths,m.trade))&&(m.color===undefined||Object.values(pinColours).includes(m.color))&&Number.isFinite(m.x)&&m.x>=0&&m.x<=config.width&&Number.isFinite(m.y)&&m.y>=0&&m.y<=config.height;}
-function persist(next){try{localStorage.setItem(storageKey('notes'),JSON.stringify(next));personal=next;return true;}catch{status('Your browser could not save this change. Free some storage and try again.',true);return false;}}
+function persist(next){try{localStorage.setItem(storageKey('notes'),JSON.stringify(next));personal=next;window.dispatchEvent(new CustomEvent('atlas:notes'));return true;}catch{status('Your browser could not save this change. Free some storage and try again.',true);return false;}}
 function download(data,name){const url=URL.createObjectURL(new Blob([JSON.stringify(data,null,2)],{type:'application/json'})),a=text('a','');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}
 function allMarkers(){return [...originals,...personal];}
 function visibleMarkers(){const terms=$('search').value.toLocaleLowerCase().trim().split(/\s+/).filter(Boolean);return allMarkers().filter(m=>atLevel(m)&&enabled.has(m.category)&&terms.every(t=>(m.name+' '+m.category+' '+m.note).toLocaleLowerCase().includes(t)));}
@@ -55,7 +55,7 @@ function switchAt(m){const destination=originals.find(row=>row.id===m.toMarker);
 const noteKind=m=>m.noteType==='label'?'Area label':m.noteType==='exit'?'Zone exit':m.category;
 function popup(m){const n=text('div','');n.append(text('div',noteKind(m)+(m.id.startsWith('personal-')?' · Your note':''),'tag'),text('h3',m.name));if(m.note)n.append(text('p',m.note));n.append(copyButton(m));if(m.toLevel){const b=text('button',m.direction==='up'?'Go up':'Go down','level-link');b.type='button';b.onclick=()=>switchAt(m);n.append(b);}if(m.id.startsWith('personal-')&&!alignmentMode){const edit=text('button','Edit note');edit.onclick=()=>openEditor(m);n.append(edit);}
  if(alignmentPositions[m.id]){n.append(text('p','Position moved in this browser.','moved-note'));if(alignmentMode){const reset=text('button','Reset position');reset.type='button';reset.onclick=()=>resetMarker(m.id);n.append(reset);}}
- return n;}
+ window.atlasCommunity?.popup(m,n);return n;}
 function labelEditPopup(row){
  const n=text('div','');n.append(text('div','Place name','tag'),text('h3',row.name));
  if(alignmentLabelPositions[row.id]){n.append(text('p','Position moved in this browser.','moved-note'));const reset=text('button','Reset position');reset.type='button';reset.onclick=()=>resetLabel(row.id);n.append(reset);}
@@ -149,6 +149,8 @@ function finishEdit(save){
  if(save){if(!saveEdits())return;}
  else{alignmentPositions=editSnapshot.positions;alignmentLabelPositions=editSnapshot.labels;personal=editSnapshot.personal;applyOverrides();}
  editSnapshot=null;buildPlaceIndex();setEditing(false);status(save?'Positions saved in this browser.':'Changes cancelled.');
+ if(save)window.dispatchEvent(new CustomEvent('atlas:positions'));
+ window.dispatchEvent(new CustomEvent('atlas:edit-ended'));
 }
 function noteTypeValue(){return document.querySelector('input[name="note-type"]:checked')?.value||'marker';}
 function updateEditorFields(){const type=noteTypeValue();$('default-colour').style.setProperty('--swatch',categories[$('category').value]?.[1]||'#a04438');$('marker-fields').hidden=type!=='marker';$('trade-field').hidden=type!=='marker'||$('category').value!=='Tradeskill';$('exit-fields').hidden=type!=='exit';}
@@ -316,6 +318,7 @@ async function loadMap(id,url=new URL(location.href),push=false){
   map.on('popupclose',()=>{if(!applyingView){activePlace=null;scheduleUrl();}});
   if(push){url.searchParams.set('map',config.id);for(const k of ['place','x','y','z','level'])url.searchParams.delete(k);url.href=url.href.split('#')[0];history.pushState({map:config.id},'',url);}
   applyLocation(url);ownView=false;updateZoom();if(keepEditing)enterEdit();loading=false;document.body.dataset.ready='true';syncUrl();
+  window.dispatchEvent(new CustomEvent('atlas:loaded'));
   if(!requested&&id)status('Unknown map; showing '+config.title+'.');
  }catch(e){if(serial!==loadSerial)return;loading=false;document.body.dataset.ready=map?'true':'false';status('The atlas could not load. '+e.message,true);if(map)syncUrl();}
  finally{if(serial===loadSerial)for(const s of document.querySelectorAll('.map-select')){s.disabled=false;if(config)s.value=config.id;}}
@@ -330,7 +333,7 @@ async function importNotes(file){
 }
 function setupCategoryControls(){
  // Filters list this map's categories plus any your notes use; notes may use every type.
- const own={...baseCategories,...(config.extraCategories||{})},used=new Set(personal.map(m=>m.category));
+ const own={...baseCategories,...(config.extraCategories||{})},used=new Set(allMarkers().map(m=>m.category));
  const filters=Object.keys(categories).filter(k=>k!=='Personal'&&(Object.hasOwn(own,k)||used.has(k))).concat('Personal');
  $('categories').replaceChildren();
  for(const kind of filters){const b=text('button','');b.dataset.category=kind;b.append(markerSymbol({category:kind,name:''}),text('span',kind==='Class trainer'?'Class trainers':kind));b.onclick=()=>{enabled.has(kind)?enabled.delete(kind):enabled.add(kind);updateCategoryButtons();drawMarkers();};$('categories').append(b);}
@@ -361,7 +364,7 @@ function setupControls(){
   delete m.noteType;delete m.arrow;delete m.trade;delete m.color;
   if(type!=='marker')m.noteType=type;if(type==='exit')m.arrow=document.querySelector('input[name="exit-arrow"]:checked')?.value||'north';if(type==='marker'&&m.category==='Tradeskill'&&$('trade').value)m.trade=$('trade').value;
   const colour=document.querySelector('input[name="pin-colour"]:checked')?.value;if(type==='marker'&&colour&&m.category!=='Class trainer')m.color=colour;
-  if(!valid(m))return;if(personal.length>=2000&&!personal.some(p=>p.id===m.id)){status('You have reached the 2,000-note limit. Export and remove older notes.');return;}if(persist([...personal.filter(p=>p.id!==m.id),m])){closeEditor();cancelPlacement();enabled.add(m.category);setupCategoryControls();$('search').value='';buildPlaceIndex();refreshSearch();choose(m);status('Saved to your field notes.');}};
+  if(!valid(m))return;if(personal.length>=2000&&!personal.some(p=>p.id===m.id)){status('You have reached the 2,000-note limit. Export and remove older notes.');return;}const added=!personal.some(p=>p.id===m.id);if(persist([...personal.filter(p=>p.id!==m.id),m])){closeEditor();cancelPlacement();enabled.add(m.category);setupCategoryControls();$('search').value='';buildPlaceIndex();refreshSearch();choose(m);status('Saved to your field notes.');if(added)window.dispatchEvent(new CustomEvent('atlas:note-added'));}};
  $('delete').onclick=()=>{if(draft&&persist(personal.filter(p=>p.id!==draft.id))){closeEditor();setupCategoryControls();buildPlaceIndex();drawMarkers();status('Personal note deleted.');}};
  $('export').onclick=()=>download({version:1,map:config.id,tileRevision:config.tileRevision,markers:personal},`${config.id}-field-notes.json`);
  $('import').onclick=()=>$('import-file').click();$('import-file').onchange=async e=>{try{if(e.target.files[0])await importNotes(e.target.files[0]);}catch(e){status('Import failed: '+e.message,true);}finally{$('import-file').value='';}};
@@ -383,4 +386,4 @@ function watchForUpdates(){
  checkForUpdate();setInterval(due,60000);document.addEventListener('visibilitychange',due);
 }
 async function init(){try{registry=validateRegistry(await fetchData('data/maps.json'));for(const c of registry.maps)for(const extra of [c.extraCategories,...(c.levels||[]).map(l=>l.extraCategories)])for(const [k,v] of Object.entries(extra||{}))if(!Object.hasOwn(allCategories,k))allCategories[k]=v;setupControls();watchForUpdates();await loadMap(new URLSearchParams(location.search).get('map')||registry.defaultMap);}catch(e){status('The atlas could not load. '+e.message,true);}}
-init();
+document.addEventListener('DOMContentLoaded',init,{once:true});

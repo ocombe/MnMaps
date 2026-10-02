@@ -26,6 +26,13 @@ use the updated positions.
 
 Use **Edit positions** (✎) to drag markers, your notes and place names. **Done** saves the new positions in this browser and **Cancel** puts everything back; a moved marker or name can be reset to its published position. **Export moved positions** downloads them as a file.
 
+Optional accounts and contributions
+-----------------------------------
+
+When accounts are enabled, **Sign in with Discord** lets you vote on published markers, suggest moved positions after **Done**, and **Share with everyone** from a personal note popup. Suggestions wait for review and a later atlas update. Signed-in notes merge with this browser's notes and sync between devices; local notes remain available if the service is down. Optional sign-in stores your Discord name and id, suggestions, votes and synced notes. Anonymous visitors can see vote counts.
+
+Public settings live in `config.js`; empty values disable their features. See [Supabase setup and access checks](supabase/README.md) and [publishing approved suggestions](scripts/README.md). To enable visit stats, set `goatcounter` to your GoatCounter site code (just the code, not a URL). Counts are anonymous, use no cookies, and record map/level visits and named actions without search text, note text or coordinates. Localhost visits are skipped. Only the optional counter script is loaded remotely, from `gc.zgo.at`; it uses [GoatCounter's manual count API](https://www.goatcounter.com/help/js).
+
 Credits and licences
 --------------------
 
@@ -61,5 +68,7 @@ Place names and guild locations adapted from [Maggot's Night Harbor map](https:/
 Fonts are bundled locally: **IM Fell English** (regular, italic and small caps) by Igino Marini and **Inter** by the Inter Project Authors, under the SIL Open Font License 1.1. See [IM Fell English OFL](assets/fonts/OFL-IMFellEnglish.txt) and [Inter OFL](assets/fonts/OFL-Inter.txt).
 
 Map controls use [Leaflet](https://leafletjs.com/), included under its [BSD-2-Clause licence](assets/vendor/LEAFLET-LICENSE.txt).
+
+Optional accounts use the locally bundled [Supabase client](https://supabase.com/), under its [MIT licence](assets/vendor/SUPABASE-LICENSE.txt).
 
 MnMaps is an unofficial fan project and is not affiliated with the creators of Monsters & Memories.
